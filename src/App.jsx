@@ -31,7 +31,7 @@ const App = () => {
     };
 
     const { db, appId, firebaseUser, dbError, chatMessages, transactions, shopOrders } = useFirebase();
-    const { ethersLib, provider, signer, account, balance, setBalance, isOwner, connectWallet } = useWallet(showStatus);
+    const { ethersLib, provider, signer, account, balance, setBalance, isOwner, connectWallet, chainId, switchChain } = useWallet(showStatus);
     const market = useMarket(activeTab);
     const { pet, gameScore, handleAction, handleFaucet } = usePet(account, showStatus);
 
@@ -58,7 +58,7 @@ const App = () => {
                     <TabBar activeTab={activeTab} setActiveTab={setActiveTab} isOwner={isOwner} />
 
                     <div className="p-6 md:p-8">
-                        {activeTab === 'wallet' && <WalletTab {...tabProps} balance={balance} setBalance={setBalance} transactions={transactions} contractAddress={contractAddress} />}
+                        {activeTab === 'wallet' && <WalletTab {...tabProps} balance={balance} setBalance={setBalance} transactions={transactions} contractAddress={contractAddress} chainId={chainId} switchChain={switchChain} />}
                         {activeTab === 'market' && <MarketTab {...market} />}
                         {activeTab === 'game' && <GameTab pet={pet} gameScore={gameScore} handleAction={handleAction} handleFaucet={handleFaucet} />}
                         {activeTab === 'shop' && <ShopTab {...tabProps} balance={balance} currentPrice={market.currentPrice} transactions={transactions} shopOrders={shopOrders} isOwner={isOwner} />}
