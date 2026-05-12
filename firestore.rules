@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ตรวจสอบว่า user เป็น admin หรือไม่ (จาก config/admins document)
+    function isAdmin(appId) {
+      let adminsPath = /databases/$(database)/documents/artifacts/$(appId)/config/admins;
+      return exists(adminsPath) && request.auth.uid in get(adminsPath).data.uids;
+    }
+
+    // ========== Community Chat ==========
+    match /artifacts/{appId}/public/data/community_chat/{docId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['text', 'sender', 'timestamp'])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.timestamp is int;
+      allow update, delete: if false;
+    }
+
+    // ========== Transactions ==========
+    match /artifacts/{appId}/public/data/transactions/{docId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['type', 'timestamp'])
+        && request.resource.data.timestamp is int;
+      allow update, delete: if false;
+    }
+
+    // ========== Shop Products (Admin เท่านั้นแก้ไขได้) ==========
+    match /artifacts/{appId}/public/data/shop_products/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin(appId);
+    }
+
+    // ========== News Posts (Admin เท่านั้นแก้ไขได้) ==========
+    match /artifacts/{appId}/public/data/news_posts/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && isAdmin(appId);
+    }
+
+    // ========== Leaderboard ==========
+    match /artifacts/{appId}/public/data/leaderboard/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ========== Admin Config (อ่านได้เฉพาะ admin) ==========
+    match /artifacts/{appId}/config/admins {
+      allow read: if request.auth != null && isAdmin(appId);
+      allow write: if false;
+    }
+
+    // ========== Private User Data ==========
+    match /artifacts/{appId}/users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ========== Deny Everything Else ==========
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
