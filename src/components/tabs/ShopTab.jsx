@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, ShoppingCart, X, Plus, Minus, Trash2, Package, Edit2, Save, Settings, Box, History, MapPin, RefreshCw } from 'lucide-react';
 import { addDoc, collection, updateDoc, deleteDoc, doc as firestoreDoc } from 'firebase/firestore';
 import { glassPanel, glassButton, glassInput, headingFont } from '../../styles';
-import { ERC20_ABI, CONTRACT_ABI, PROMPTPAY_ID, USD_THB_RATE, SHOP_WALLET_ADDRESS, ADMIN_WALLETS } from '../../constants';
+import { ERC20_ABI, PROMPTPAY_ID, USD_THB_RATE, SHOP_WALLET_ADDRESS, ADMIN_WALLETS } from '../../constants';
 import { recordTransaction } from '../../utils/recordTx';
 
-export default function ShopTab({ account, signer, ethersLib, provider, db, appId, firebaseUser, currentPrice, isLoading, setIsLoading, showStatus, transactions, shopOrders, isOwner, products, contractAddress }) {
+export default function ShopTab({ account, signer, ethersLib, provider, db, appId, firebaseUser, currentPrice, isLoading, setIsLoading, showStatus, transactions, shopOrders, isOwner, products }) {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [shopCategory, setShopCategory] = useState("All");
@@ -88,23 +88,11 @@ export default function ShopTab({ account, signer, ethersLib, provider, db, appI
         showStatus("กำลังดำเนินการชำระเงิน...", "info");
         const items = cart.map(i => `${i.name} (x${i.qty})`).join(', ');
         const target = getTarget();
-        const useContract = contractAddress && ethersLib?.utils.isAddress(contractAddress);
         try {
             if (paymentMethod === 'ETH') {
                 const value = ethersLib.utils.parseEther(cartTotalETH.toFixed(6).toString());
-                if (useContract) {
-                    try {
-                        const c = new ethersLib.Contract(contractAddress, CONTRACT_ABI, signer);
-                        const tx = await c.transferETHWithReferral(target, ADMIN_WALLETS[0], { value });
-                        await tx.wait();
-                    } catch {
-                        const tx = await signer.sendTransaction({ to: target, value });
-                        await tx.wait();
-                    }
-                } else {
-                    const tx = await signer.sendTransaction({ to: target, value });
-                    await tx.wait();
-                }
+                const tx = await signer.sendTransaction({ to: target, value });
+                await tx.wait();
                 await recordTransaction(db, appId, firebaseUser, account, "SHOP_BUY", cartTotalETH.toFixed(6), "ETH", target, items, shippingAddress);
             } else if (paymentMethod === 'USDT') {
                 if (!usdtAddress) throw new Error("กรุณาระบุ USDT Contract Address");
@@ -114,25 +102,8 @@ export default function ShopTab({ account, signer, ethersLib, provider, db, appI
                 const wei = ethersLib.utils.parseUnits(usdVal.toFixed(2).toString(), dec);
                 const bal = await tc.balanceOf(account);
                 if (bal.lt(wei)) throw new Error(`ยอดเงิน USDT ไม่เพียงพอ`);
-                if (useContract) {
-                    try {
-                        const allowance = await tc.allowance(account, contractAddress);
-                        if (allowance.lt(wei)) {
-                            showStatus("กำลัง Approve USDT...", "info");
-                            const approveTx = await tc.approve(contractAddress, wei);
-                            await approveTx.wait();
-                        }
-                        const c = new ethersLib.Contract(contractAddress, CONTRACT_ABI, signer);
-                        const tx = await c.transferTokenWithReferral(usdtAddress, target, wei, ADMIN_WALLETS[0]);
-                        await tx.wait();
-                    } catch {
-                        const tx = await tc.transfer(target, wei);
-                        await tx.wait();
-                    }
-                } else {
-                    const tx = await tc.transfer(target, wei);
-                    await tx.wait();
-                }
+                const tx = await tc.transfer(target, wei);
+                await tx.wait();
                 await recordTransaction(db, appId, firebaseUser, account, "SHOP_BUY", usdVal.toFixed(2), "USDT", target, items, shippingAddress);
             } else if (paymentMethod === 'PROMPTPAY') {
                 await new Promise(r => setTimeout(r, 2000));

@@ -6,8 +6,7 @@ import { usePet } from './hooks/usePet';
 import Header from './components/Header';
 import TabBar from './components/TabBar';
 import AiChatbot from './components/AiChatbot';
-import { glassPanel, bodyFont } from './styles';
-import { DEFAULT_CONTRACT_ADDRESS } from './constants';
+import { bodyFont } from './styles';
 
 const WalletTab   = lazy(() => import('./components/tabs/WalletTab'));
 const MarketTab   = lazy(() => import('./components/tabs/MarketTab'));
@@ -29,7 +28,6 @@ const App = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [statusMsg, setStatusMsg] = useState("");
     const [statusType, setStatusType] = useState("info");
-    const [contractAddress, setContractAddress] = useState(DEFAULT_CONTRACT_ADDRESS);
 
     const showStatus = (msg, type = "info") => {
         const safe = typeof msg === 'object' ? JSON.stringify(msg) : String(msg);
@@ -49,28 +47,19 @@ const App = () => {
             <div className="max-w-6xl mx-auto space-y-6 relative z-10">
                 <Header account={account} balance={balance} isOwner={isOwner} connectWallet={connectWallet} chainId={chainId} />
 
-                {isOwner && (
-                    <div className={`p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center ${glassPanel}`}>
-                        <div className="flex-1 w-full">
-                            <label className="text-xs text-slate-400 mb-1 block uppercase tracking-wider">Smart Contract Address</label>
-                            <input type="text" placeholder="0x..." value={contractAddress} onChange={(e) => setContractAddress(e.target.value)} className="w-full rounded-lg px-4 py-2 font-mono text-sm bg-slate-950/50 border border-white/10 focus:border-cyan-500/50 outline-none text-slate-200" />
-                        </div>
-                    </div>
-                )}
-
-                <div className={`rounded-2xl overflow-hidden relative ${glassPanel}`}>
+                <div className="rounded-2xl overflow-hidden relative bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl">
                     <TabBar activeTab={activeTab} setActiveTab={setActiveTab} isOwner={isOwner} />
 
                     <div className="p-6 md:p-8">
                         <Suspense fallback={<TabLoader />}>
-                            {activeTab === 'wallet' && <WalletTab {...tabProps} balance={balance} setBalance={setBalance} transactions={transactions} contractAddress={contractAddress} chainId={chainId} switchChain={switchChain} />}
+                            {activeTab === 'wallet' && <WalletTab {...tabProps} balance={balance} setBalance={setBalance} transactions={transactions} chainId={chainId} switchChain={switchChain} />}
                             {activeTab === 'market' && <MarketTab {...market} />}
                             {activeTab === 'game' && <GameTab pet={pet} gameScore={gameScore} handleAction={handleAction} handleFaucet={handleFaucet} />}
-                            {activeTab === 'shop' && <ShopTab {...tabProps} balance={balance} currentPrice={market.currentPrice} transactions={transactions} shopOrders={shopOrders} isOwner={isOwner} products={products} contractAddress={contractAddress} />}
+                            {activeTab === 'shop' && <ShopTab {...tabProps} balance={balance} currentPrice={market.currentPrice} transactions={transactions} shopOrders={shopOrders} isOwner={isOwner} products={products} />}
                             {activeTab === 'news' && <NewsTab />}
                             {activeTab === 'community' && <CommunityTab {...tabProps} dbError={dbError} chatMessages={chatMessages} />}
-                            {activeTab === 'donate' && <DonateTab {...tabProps} contractAddress={contractAddress} />}
-                            {activeTab === 'admin' && <AdminTab contractAddress={contractAddress} signer={signer} ethersLib={ethersLib} isLoading={isLoading} setIsLoading={setIsLoading} showStatus={showStatus} />}
+                            {activeTab === 'donate' && <DonateTab {...tabProps} />}
+                            {activeTab === 'admin' && <AdminTab shopOrders={shopOrders} transactions={transactions} account={account} />}
                         </Suspense>
 
                         {statusMsg && (

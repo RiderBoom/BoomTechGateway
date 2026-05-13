@@ -1,22 +1,9 @@
-export const DEFAULT_CONTRACT_ADDRESS = "0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B";
 export const SHOP_WALLET_ADDRESS = "0xCEEcd5Fe0034F397B5A66a7BcD754B5B08a6cd70";
 export const PROMPTPAY_ID = "0950524447";
 export const USD_THB_RATE = 35.5;
 
 export const ADMIN_WALLETS = [
     "0xCEEcd5Fe0034F397B5A66a7BcD754B5B08a6cd70",
-];
-
-export const CONTRACT_ABI = [
-    "function transferETHWithReferral(address payable to, address referrer) external payable",
-    "function transferTokenWithReferral(address token, address to, uint256 amount, address referrer) external",
-    "function donateETH() external payable",
-    "function donateToken(address token, uint256 amount) external",
-    "function owner() view returns (address)",
-    "function setFeeBps(uint256 newFeeBps) external",
-    "function setTreasury(address newTreasury) external",
-    "function feeBps() view returns (uint256)",
-    "function rescueETH(uint256 amount) external"
 ];
 
 export const ERC20_ABI = [

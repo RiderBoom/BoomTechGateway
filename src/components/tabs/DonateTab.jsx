@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Heart, Wallet, Coins, RefreshCw } from 'lucide-react';
 import { glassPanel, glassInput, headingFont } from '../../styles';
-import { ERC20_ABI, CONTRACT_ABI, SHOP_WALLET_ADDRESS, ADMIN_WALLETS } from '../../constants';
+import { ERC20_ABI, SHOP_WALLET_ADDRESS, ADMIN_WALLETS } from '../../constants';
 import { recordTransaction } from '../../utils/recordTx';
 
-export default function DonateTab({ account, signer, ethersLib, db, appId, firebaseUser, isLoading, setIsLoading, showStatus, contractAddress }) {
+export default function DonateTab({ account, signer, ethersLib, db, appId, firebaseUser, isLoading, setIsLoading, showStatus }) {
     const [donateType, setDonateType] = useState("ETH");
     const [amount, setAmount] = useState("");
     const [tokenAddress, setTokenAddress] = useState("");
@@ -24,24 +24,11 @@ export default function DonateTab({ account, signer, ethersLib, db, appId, fireb
 
         setIsLoading(true);
         const target = getTarget();
-        const useContract = contractAddress && ethersLib.utils.isAddress(contractAddress);
-
         try {
             if (donateType === "ETH") {
                 const value = ethersLib.utils.parseEther(amount);
-                if (useContract) {
-                    try {
-                        const c = new ethersLib.Contract(contractAddress, CONTRACT_ABI, signer);
-                        const tx = await c.donateETH({ value });
-                        await tx.wait();
-                    } catch {
-                        const tx = await signer.sendTransaction({ to: target, value });
-                        await tx.wait();
-                    }
-                } else {
-                    const tx = await signer.sendTransaction({ to: target, value });
-                    await tx.wait();
-                }
+                const tx = await signer.sendTransaction({ to: target, value });
+                await tx.wait();
                 await recordTransaction(db, appId, firebaseUser, account, "DONATE_ETH", amount, "ETH", "Treasury");
             } else {
                 if (!tokenAddress) throw new Error("กรุณาระบุ Token Contract Address");
@@ -51,25 +38,8 @@ export default function DonateTab({ account, signer, ethersLib, db, appId, fireb
                 const wei = ethersLib.utils.parseUnits(amount, dec);
                 const bal = await tc.balanceOf(account);
                 if (bal.lt(wei)) throw new Error("ยอดเงิน Token ไม่เพียงพอ");
-                if (useContract) {
-                    try {
-                        const allowance = await tc.allowance(account, contractAddress);
-                        if (allowance.lt(wei)) {
-                            showStatus("กำลัง Approve token...", "info");
-                            const approveTx = await tc.approve(contractAddress, wei);
-                            await approveTx.wait();
-                        }
-                        const c = new ethersLib.Contract(contractAddress, CONTRACT_ABI, signer);
-                        const tx = await c.donateToken(tokenAddress, wei);
-                        await tx.wait();
-                    } catch {
-                        const tx = await tc.transfer(target, wei);
-                        await tx.wait();
-                    }
-                } else {
-                    const tx = await tc.transfer(target, wei);
-                    await tx.wait();
-                }
+                const tx = await tc.transfer(target, wei);
+                await tx.wait();
                 await recordTransaction(db, appId, firebaseUser, account, "DONATE_TOKEN", amount, "TOKEN", "Treasury");
             }
             showStatus("ขอบคุณสำหรับการบริจาค! 🙏", "success");
