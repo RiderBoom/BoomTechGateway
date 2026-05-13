@@ -30,7 +30,7 @@ const App = () => {
         if (type === "success") setTimeout(() => setStatusMsg(""), 5000);
     };
 
-    const { db, appId, firebaseUser, dbError, chatMessages, transactions, shopOrders } = useFirebase();
+    const { db, appId, firebaseUser, dbError, chatMessages, transactions, shopOrders, products } = useFirebase();
     const { ethersLib, provider, signer, account, balance, setBalance, isOwner, connectWallet, chainId, switchChain } = useWallet(showStatus);
     const market = useMarket(activeTab);
     const { pet, gameScore, handleAction, handleFaucet } = usePet(account, showStatus);
@@ -43,7 +43,7 @@ const App = () => {
             <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');`}</style>
 
             <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-                <Header account={account} balance={balance} isOwner={isOwner} connectWallet={connectWallet} />
+                <Header account={account} balance={balance} isOwner={isOwner} connectWallet={connectWallet} chainId={chainId} />
 
                 {isOwner && (
                     <div className={`p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center ${glassPanel}`}>
@@ -61,10 +61,10 @@ const App = () => {
                         {activeTab === 'wallet' && <WalletTab {...tabProps} balance={balance} setBalance={setBalance} transactions={transactions} contractAddress={contractAddress} chainId={chainId} switchChain={switchChain} />}
                         {activeTab === 'market' && <MarketTab {...market} />}
                         {activeTab === 'game' && <GameTab pet={pet} gameScore={gameScore} handleAction={handleAction} handleFaucet={handleFaucet} />}
-                        {activeTab === 'shop' && <ShopTab {...tabProps} balance={balance} currentPrice={market.currentPrice} transactions={transactions} shopOrders={shopOrders} isOwner={isOwner} />}
+                        {activeTab === 'shop' && <ShopTab {...tabProps} balance={balance} currentPrice={market.currentPrice} transactions={transactions} shopOrders={shopOrders} isOwner={isOwner} products={products} contractAddress={contractAddress} />}
                         {activeTab === 'news' && <NewsTab />}
                         {activeTab === 'community' && <CommunityTab {...tabProps} dbError={dbError} chatMessages={chatMessages} />}
-                        {activeTab === 'donate' && <DonateTab {...tabProps} />}
+                        {activeTab === 'donate' && <DonateTab {...tabProps} contractAddress={contractAddress} />}
                         {activeTab === 'admin' && <AdminTab contractAddress={contractAddress} signer={signer} ethersLib={ethersLib} isLoading={isLoading} setIsLoading={setIsLoading} showStatus={showStatus} />}
 
                         {statusMsg && (

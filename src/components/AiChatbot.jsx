@@ -21,7 +21,7 @@ export default function AiChatbot({ coinSymbol, currentPrice, priceChange, marke
         setIsTyping(true);
         try {
             const systemPrompt = `You are BoomBot AI, an intelligent crypto assistant. Current Market Context: Active Coin: ${coinSymbol}, Price: $${currentPrice.toLocaleString()}, 24h Change: ${priceChange.toFixed(2)}%, Market Cap: $${marketStats.marketCap.toLocaleString()}, Fear & Greed: ${fearGreed.value} (${fearGreed.status}). Role: Crypto assistant. Tone: Friendly, professional. Language: Thai.`;
-            const apiKey = "";
+            const apiKey = import.meta.env.VITE_GEMINI_KEY || "";
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ contents: [{ parts: [{ text: query }] }], systemInstruction: { parts: [{ text: systemPrompt }] } })

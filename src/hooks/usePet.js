@@ -9,7 +9,7 @@ const STAGES = {
 };
 
 export function usePet(account, showStatus) {
-    const [gameScore, setGameScore] = useState(1000);
+    const [gameScore, setGameScore] = useState(0);
     const [pet, setPet] = useState({ name: "Egg", stage: "egg", hunger: 100, energy: 100, happiness: 100, exp: 0, age: 0, isSleeping: false, lastTick: Date.now() });
 
     useEffect(() => {

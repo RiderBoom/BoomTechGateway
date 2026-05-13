@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingBag, ShoppingCart, X, Plus, Minus, Trash2, Package, Edit2, Save, Settings, Box, History, MapPin, RefreshCw } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, updateDoc, deleteDoc, doc as firestoreDoc } from 'firebase/firestore';
 import { glassPanel, glassButton, glassInput, headingFont } from '../../styles';
-import { ERC20_ABI, PROMPTPAY_ID, USD_THB_RATE, INITIAL_PRODUCTS, SHOP_WALLET_ADDRESS, ADMIN_WALLETS } from '../../constants';
+import { ERC20_ABI, CONTRACT_ABI, PROMPTPAY_ID, USD_THB_RATE, SHOP_WALLET_ADDRESS, ADMIN_WALLETS } from '../../constants';
 import { recordTransaction } from '../../utils/recordTx';
 
-export default function ShopTab({ account, signer, ethersLib, provider, db, appId, firebaseUser, currentPrice, isLoading, setIsLoading, showStatus, transactions, shopOrders, isOwner }) {
-    const [products, setProducts] = useState(INITIAL_PRODUCTS);
+export default function ShopTab({ account, signer, ethersLib, provider, db, appId, firebaseUser, currentPrice, isLoading, setIsLoading, showStatus, transactions, shopOrders, isOwner, products, contractAddress }) {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [shopCategory, setShopCategory] = useState("All");
@@ -17,6 +16,21 @@ export default function ShopTab({ account, signer, ethersLib, provider, db, appI
     const [newProduct, setNewProduct] = useState({ name: "", price: "", category: "Merch", image: "" });
     const [editingProductId, setEditingProductId] = useState(null);
     const [shippingAddress, setShippingAddress] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const fetch = async () => {
+            if (!account || !ethersLib || !ethersLib.utils.isAddress(usdtAddress)) {
+                setUsdtBalance("0.00"); return;
+            }
+            try {
+                const c = new ethersLib.Contract(usdtAddress, ERC20_ABI, provider);
+                const [bal, dec] = await Promise.all([c.balanceOf(account), c.decimals()]);
+                setUsdtBalance(parseFloat(ethersLib.utils.formatUnits(bal, dec)).toFixed(4));
+            } catch { setUsdtBalance("0.00"); }
+        };
+        fetch();
+    }, [usdtAddress, account, ethersLib, provider]);
 
     const ethToUsd = currentPrice > 0 ? currentPrice : 3000;
     const cartTotalETH = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
@@ -28,25 +42,43 @@ export default function ShopTab({ account, signer, ethersLib, provider, db, appI
         return "0x000000000000000000000000000000000000dEaD";
     };
 
+    const prodPath = () => collection(db, 'artifacts', appId, 'public', 'data', 'products');
+
     const addToCart = (product) => { setCart(prev => { const ex = prev.find(i => i.id === product.id); return ex ? prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i) : [...prev, { ...product, qty: 1 }]; }); showStatus(`${product.name} เพิ่มลงตะกร้าแล้ว`, "success"); };
     const removeFromCart = (id) => setCart(prev => prev.filter(i => i.id !== id));
     const updateQty = (id, delta) => setCart(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
 
-    const handleSaveProduct = () => {
+    const handleSaveProduct = async () => {
         if (!newProduct.name || !newProduct.price) return showStatus("กรุณากรอกชื่อและราคา", "error");
+        if (!db) return showStatus("Firebase ไม่พร้อมใช้งาน", "error");
         const img = newProduct.image || "https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&w=500&q=80";
-        if (editingProductId) {
-            setProducts(prev => prev.map(p => p.id === editingProductId ? { ...newProduct, id: editingProductId, price: parseFloat(newProduct.price), image: img } : p));
-            showStatus("แก้ไขสินค้าเรียบร้อย ✅", "success"); setEditingProductId(null);
-        } else {
-            setProducts(prev => [{ id: Date.now(), ...newProduct, price: parseFloat(newProduct.price), image: img }, ...prev]);
-            showStatus("เพิ่มสินค้าเรียบร้อย ✅", "success");
-        }
-        setNewProduct({ name: "", price: "", category: "Merch", image: "" });
+        const prodData = { name: newProduct.name, price: parseFloat(newProduct.price), category: newProduct.category, image: img };
+        setIsSaving(true);
+        try {
+            if (editingProductId && typeof editingProductId === 'string') {
+                await updateDoc(firestoreDoc(db, 'artifacts', appId, 'public', 'data', 'products', editingProductId), prodData);
+                showStatus("แก้ไขสินค้าเรียบร้อย ✅", "success");
+            } else {
+                await addDoc(prodPath(), { ...prodData, createdAt: Date.now() });
+                showStatus("เพิ่มสินค้าเรียบร้อย ✅", "success");
+            }
+            setEditingProductId(null);
+            setNewProduct({ name: "", price: "", category: "Merch", image: "" });
+        } catch (err) { showStatus("บันทึกไม่สำเร็จ: " + err.message, "error"); }
+        finally { setIsSaving(false); }
     };
+
     const startEdit = (p) => { setNewProduct({ ...p, price: p.price.toString() }); setEditingProductId(p.id); window.scrollTo({ top: 0, behavior: 'smooth' }); };
     const cancelEdit = () => { setNewProduct({ name: "", price: "", category: "Merch", image: "" }); setEditingProductId(null); };
-    const deleteProduct = (id) => { if (editingProductId === id) cancelEdit(); setProducts(prev => prev.filter(p => p.id !== id)); showStatus("ลบสินค้าแล้ว", "info"); };
+
+    const deleteProduct = async (id) => {
+        if (editingProductId === id) cancelEdit();
+        if (!db || typeof id !== 'string') { showStatus("ลบไม่ได้: สินค้านี้ยังไม่ได้บันทึกลง Firebase", "error"); return; }
+        try {
+            await deleteDoc(firestoreDoc(db, 'artifacts', appId, 'public', 'data', 'products', id));
+            showStatus("ลบสินค้าแล้ว", "info");
+        } catch (err) { showStatus("ลบไม่สำเร็จ: " + err.message, "error"); }
+    };
 
     const handleCheckout = async () => {
         if (!account && paymentMethod !== 'PROMPTPAY') return showStatus("กรุณาเชื่อมต่อกระเป๋าก่อนชำระเงิน", "error");
@@ -56,10 +88,23 @@ export default function ShopTab({ account, signer, ethersLib, provider, db, appI
         showStatus("กำลังดำเนินการชำระเงิน...", "info");
         const items = cart.map(i => `${i.name} (x${i.qty})`).join(', ');
         const target = getTarget();
+        const useContract = contractAddress && ethersLib?.utils.isAddress(contractAddress);
         try {
             if (paymentMethod === 'ETH') {
-                const tx = await signer.sendTransaction({ to: target, value: ethersLib.utils.parseEther(cartTotalETH.toFixed(6).toString()) });
-                await tx.wait();
+                const value = ethersLib.utils.parseEther(cartTotalETH.toFixed(6).toString());
+                if (useContract) {
+                    try {
+                        const c = new ethersLib.Contract(contractAddress, CONTRACT_ABI, signer);
+                        const tx = await c.transferETHWithReferral(target, ADMIN_WALLETS[0], { value });
+                        await tx.wait();
+                    } catch {
+                        const tx = await signer.sendTransaction({ to: target, value });
+                        await tx.wait();
+                    }
+                } else {
+                    const tx = await signer.sendTransaction({ to: target, value });
+                    await tx.wait();
+                }
                 await recordTransaction(db, appId, firebaseUser, account, "SHOP_BUY", cartTotalETH.toFixed(6), "ETH", target, items, shippingAddress);
             } else if (paymentMethod === 'USDT') {
                 if (!usdtAddress) throw new Error("กรุณาระบุ USDT Contract Address");
@@ -69,8 +114,25 @@ export default function ShopTab({ account, signer, ethersLib, provider, db, appI
                 const wei = ethersLib.utils.parseUnits(usdVal.toFixed(2).toString(), dec);
                 const bal = await tc.balanceOf(account);
                 if (bal.lt(wei)) throw new Error(`ยอดเงิน USDT ไม่เพียงพอ`);
-                const tx = await tc.transfer(target, wei);
-                await tx.wait();
+                if (useContract) {
+                    try {
+                        const allowance = await tc.allowance(account, contractAddress);
+                        if (allowance.lt(wei)) {
+                            showStatus("กำลัง Approve USDT...", "info");
+                            const approveTx = await tc.approve(contractAddress, wei);
+                            await approveTx.wait();
+                        }
+                        const c = new ethersLib.Contract(contractAddress, CONTRACT_ABI, signer);
+                        const tx = await c.transferTokenWithReferral(usdtAddress, target, wei, ADMIN_WALLETS[0]);
+                        await tx.wait();
+                    } catch {
+                        const tx = await tc.transfer(target, wei);
+                        await tx.wait();
+                    }
+                } else {
+                    const tx = await tc.transfer(target, wei);
+                    await tx.wait();
+                }
                 await recordTransaction(db, appId, firebaseUser, account, "SHOP_BUY", usdVal.toFixed(2), "USDT", target, items, shippingAddress);
             } else if (paymentMethod === 'PROMPTPAY') {
                 await new Promise(r => setTimeout(r, 2000));
@@ -109,19 +171,22 @@ export default function ShopTab({ account, signer, ethersLib, provider, db, appI
                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">{editingProductId ? <Edit2 className="w-5 h-5 text-yellow-400"/> : <Plus className="w-5 h-5 text-emerald-400"/>}{editingProductId ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="text" placeholder="ชื่อสินค้า" value={newProduct.name} onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} className={`rounded-lg px-4 py-2 text-sm ${glassInput}`}/>
-                            <input type="number" placeholder="ราคา (ETH)" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} className={`rounded-lg px-4 py-2 text-sm ${glassInput}`}/>
+                            <input type="number" placeholder="ราคา (ETH)" min="0" step="any" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} className={`rounded-lg px-4 py-2 text-sm ${glassInput}`}/>
                             <select value={newProduct.category} onChange={(e) => setNewProduct({...newProduct, category: e.target.value})} className={`rounded-lg px-4 py-2 text-sm ${glassInput}`}>{["Merch","Gadget","Mining","Digital","NFT"].map(c => <option key={c} value={c} className="bg-slate-900">{c}</option>)}</select>
                             <input type="text" placeholder="URL รูปภาพ (Optional)" value={newProduct.image} onChange={(e) => setNewProduct({...newProduct, image: e.target.value})} className={`rounded-lg px-4 py-2 text-sm ${glassInput}`}/>
                         </div>
                         <div className="flex gap-2 mt-4">
                             {editingProductId && <button onClick={cancelEdit} className="w-1/3 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg font-bold">ยกเลิก</button>}
-                            <button onClick={handleSaveProduct} className={`flex-1 text-white py-2 rounded-lg font-bold ${editingProductId ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}>{editingProductId ? <><Save className="w-4 h-4 inline mr-2"/>บันทึกการแก้ไข</> : <><Plus className="w-4 h-4 inline mr-2"/>เพิ่มสินค้า</>}</button>
+                            <button onClick={handleSaveProduct} disabled={isSaving} className={`flex-1 text-white py-2 rounded-lg font-bold disabled:opacity-50 flex items-center justify-center gap-2 ${editingProductId ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}>
+                                {isSaving ? <RefreshCw className="w-4 h-4 animate-spin"/> : editingProductId ? <><Save className="w-4 h-4 inline mr-1"/>บันทึกการแก้ไข</> : <><Plus className="w-4 h-4 inline mr-1"/>เพิ่มสินค้า</>}
+                            </button>
                         </div>
+                        {!db && <p className="text-xs text-yellow-400 mt-2 text-center">⚠ Firebase ยังไม่พร้อม — สินค้าจะไม่ถูกบันทึก</p>}
                     </div>
                     <div className={`p-6 rounded-2xl ${glassPanel}`}>
                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Settings className="w-5 h-5 text-yellow-400"/> จัดการสินค้า</h3>
                         <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
-                            {products.map(p => (<div key={p.id} className={`flex justify-between items-center p-3 rounded-lg border ${editingProductId === p.id ? 'bg-yellow-900/20 border-yellow-500/50' : 'bg-slate-950/50 border-slate-700/50'}`}><div className="flex items-center gap-3"><img src={p.image} className="w-10 h-10 rounded-md object-cover" alt=""/><div><p className="font-bold text-sm text-white">{p.name}</p><p className="text-xs text-slate-400">{p.category} • {p.price} ETH</p></div></div><div className="flex gap-2"><button onClick={() => { setIsSellerMode(true); startEdit(p); }} className="text-yellow-400 hover:bg-yellow-500/10 p-2 rounded-lg"><Edit2 className="w-4 h-4"/></button><button onClick={() => deleteProduct(p.id)} className="text-red-400 hover:bg-red-500/10 p-2 rounded-lg"><Trash2 className="w-4 h-4"/></button></div></div>))}
+                            {products.map(p => (<div key={p.id} className={`flex justify-between items-center p-3 rounded-lg border ${editingProductId === p.id ? 'bg-yellow-900/20 border-yellow-500/50' : 'bg-slate-950/50 border-slate-700/50'}`}><div className="flex items-center gap-3"><img src={p.image} className="w-10 h-10 rounded-md object-cover" alt=""/><div><p className="font-bold text-sm text-white">{p.name}</p><p className="text-xs text-slate-400">{p.category} • {p.price} ETH {typeof p.id !== 'string' && <span className="text-yellow-500">(ยังไม่ได้บันทึก)</span>}</p></div></div><div className="flex gap-2"><button onClick={() => { setIsSellerMode(true); startEdit(p); }} className="text-yellow-400 hover:bg-yellow-500/10 p-2 rounded-lg"><Edit2 className="w-4 h-4"/></button><button onClick={() => deleteProduct(p.id)} className="text-red-400 hover:bg-red-500/10 p-2 rounded-lg" title={typeof p.id !== 'string' ? 'ต้องบันทึกลง Firebase ก่อนจึงจะลบได้' : 'ลบสินค้า'}><Trash2 className="w-4 h-4"/></button></div></div>))}
                         </div>
                     </div>
                     <div className={`p-6 rounded-2xl ${glassPanel}`}>

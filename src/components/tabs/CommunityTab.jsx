@@ -14,7 +14,7 @@ export default function CommunityTab({ db, appId, firebaseUser, account, dbError
     const handleImageSelect = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 1024 * 1024) return showStatus("รูปภาพต้องมีขนาดไม่เกิน 1MB", "error");
+        if (file.size > 500 * 1024) return showStatus("รูปภาพต้องมีขนาดไม่เกิน 500KB", "error");
         const reader = new FileReader();
         reader.onloadend = () => setSelectedImage(reader.result);
         reader.readAsDataURL(file);

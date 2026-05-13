@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
-import { FIREBASE_CONFIG } from '../constants';
+import { FIREBASE_CONFIG, INITIAL_PRODUCTS } from '../constants';
 
 export function useFirebase() {
     const [db, setDb] = useState(null);
@@ -11,6 +11,7 @@ export function useFirebase() {
     const [chatMessages, setChatMessages] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [shopOrders, setShopOrders] = useState([]);
+    const [products, setProducts] = useState(INITIAL_PRODUCTS);
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -74,7 +75,17 @@ export function useFirebase() {
             setShopOrders(txs.filter(t => t.type === 'SHOP_BUY' || t.type === 'SHOP_BUY_QR'));
         });
 
-        return () => { unsubChat(); unsubTx(); };
+        const prodRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+        const unsubProd = onSnapshot(prodRef, (snap) => {
+            if (!snap.empty) {
+                const prods = snap.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                setProducts(prods);
+            }
+        });
+
+        return () => { unsubChat(); unsubTx(); unsubProd(); };
     }, [db, appId, firebaseUser]);
 
     useEffect(() => {
@@ -88,5 +99,5 @@ export function useFirebase() {
         return () => clearInterval(interval);
     }, []);
 
-    return { db, appId, firebaseUser, dbError, chatMessages, transactions, shopOrders };
+    return { db, appId, firebaseUser, dbError, chatMessages, transactions, shopOrders, products };
 }

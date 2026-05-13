@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Search, RefreshCw, TrendingUp, Coins, Gauge, Globe, ExternalLink } from 'lucide-react';
 import { glassPanel, glassButton, glassInput, headingFont } from '../../styles';
 import { QUICK_COINS } from '../../constants';
@@ -6,7 +6,7 @@ import { formatNumber } from '../../utils/recordTx';
 
 function TradingViewWidget({ symbol, isCustom }) {
     const containerRef = useRef(null);
-    const containerId = `tv-${Math.random().toString(36).substr(2, 9)}`;
+    const containerId = useMemo(() => `tv-${Math.random().toString(36).substr(2, 9)}`, []);
     useEffect(() => {
         let tvInterval;
         const load = () => {

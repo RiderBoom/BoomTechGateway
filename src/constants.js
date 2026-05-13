@@ -36,6 +36,51 @@ export const FIREBASE_CONFIG = {
     appId: "1:1032978734418:web:50605af806581bf4a86e8b"
 };
 
+export const CHAINS = {
+    1: {
+        name: "Ethereum", symbol: "ETH", shortName: "ETH",
+        rpc: "https://eth.llamarpc.com", explorer: "https://etherscan.io",
+        color: "text-blue-400", border: "border-blue-500/50", bg: "bg-blue-500/10",
+        gradient: "from-blue-600 to-blue-800"
+    },
+    56: {
+        name: "BNB Chain", symbol: "BNB", shortName: "BNB",
+        rpc: "https://bsc-dataseed.binance.org", explorer: "https://bscscan.com",
+        color: "text-yellow-400", border: "border-yellow-500/50", bg: "bg-yellow-500/10",
+        gradient: "from-yellow-500 to-yellow-700"
+    },
+    137: {
+        name: "Polygon", symbol: "POL", shortName: "MATIC",
+        rpc: "https://polygon-rpc.com", explorer: "https://polygonscan.com",
+        color: "text-purple-400", border: "border-purple-500/50", bg: "bg-purple-500/10",
+        gradient: "from-purple-600 to-purple-800"
+    },
+    42161: {
+        name: "Arbitrum", symbol: "ETH", shortName: "ARB",
+        rpc: "https://arb1.arbitrum.io/rpc", explorer: "https://arbiscan.io",
+        color: "text-sky-400", border: "border-sky-500/50", bg: "bg-sky-500/10",
+        gradient: "from-sky-600 to-sky-800"
+    },
+    10: {
+        name: "Optimism", symbol: "ETH", shortName: "OP",
+        rpc: "https://mainnet.optimism.io", explorer: "https://optimistic.etherscan.io",
+        color: "text-red-400", border: "border-red-500/50", bg: "bg-red-500/10",
+        gradient: "from-red-600 to-red-800"
+    },
+    43114: {
+        name: "Avalanche", symbol: "AVAX", shortName: "AVAX",
+        rpc: "https://api.avax.network/ext/bc/C/rpc", explorer: "https://snowtrace.io",
+        color: "text-red-300", border: "border-red-400/50", bg: "bg-red-400/10",
+        gradient: "from-red-500 to-rose-700"
+    },
+    8453: {
+        name: "Base", symbol: "ETH", shortName: "BASE",
+        rpc: "https://mainnet.base.org", explorer: "https://basescan.org",
+        color: "text-indigo-400", border: "border-indigo-500/50", bg: "bg-indigo-500/10",
+        gradient: "from-indigo-600 to-indigo-800"
+    },
+};
+
 export const QUICK_COINS = [
     { symbol: 'BTC', id: 'bitcoin' },
     { symbol: 'ETH', id: 'ethereum' },

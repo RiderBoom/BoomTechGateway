@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ADMIN_WALLETS } from '../constants';
+import { ADMIN_WALLETS, CHAINS } from '../constants';
 
 export function useWallet(showStatus) {
     const [ethersLib, setEthersLib] = useState(null);
@@ -8,6 +8,7 @@ export function useWallet(showStatus) {
     const [account, setAccount] = useState("");
     const [balance, setBalance] = useState("0.0000");
     const [isOwner, setIsOwner] = useState(false);
+    const [chainId, setChainId] = useState(null);
 
     useEffect(() => {
         if (typeof ethers !== 'undefined') { setEthersLib(ethers); return; }
@@ -26,8 +27,9 @@ export function useWallet(showStatus) {
         });
         window.ethereum.on('accountsChanged', (accounts) => {
             if (accounts.length > 0) { setAccount(accounts[0]); window.location.reload(); }
-            else { setAccount(""); setSigner(null); setBalance("0.0000"); }
+            else { setAccount(""); setSigner(null); setBalance("0.0000"); setChainId(null); }
         });
+        window.ethereum.on('chainChanged', () => window.location.reload());
     }, [ethersLib]);
 
     useEffect(() => {
@@ -53,16 +55,46 @@ export function useWallet(showStatus) {
             const sign = prov.getSigner();
             const addr = await sign.getAddress();
             const raw = await prov.getBalance(addr);
+            const network = await prov.getNetwork();
             setProvider(prov);
             setSigner(sign);
             setAccount(addr);
             setBalance(parseFloat(ethersLib.utils.formatEther(raw)).toFixed(4));
+            setChainId(network.chainId);
             setIsOwner(ADMIN_WALLETS.some(a => a.toLowerCase() === addr.toLowerCase()));
-            showStatus("เชื่อมต่อกระเป๋าสำเร็จ! ✅", "success");
+            const chainName = CHAINS[network.chainId]?.name || `Chain ${network.chainId}`;
+            showStatus(`เชื่อมต่อสำเร็จ! ✅ (${chainName})`, "success");
         } catch (err) {
             showStatus("เชื่อมต่อล้มเหลว: " + (err.message || err), "error");
         }
     };
 
-    return { ethersLib, provider, signer, account, balance, setBalance, isOwner, connectWallet };
+    const switchChain = async (targetChainId) => {
+        if (!window.ethereum) return;
+        const hexId = '0x' + targetChainId.toString(16);
+        try {
+            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hexId }] });
+        } catch (err) {
+            if (err.code === 4902) {
+                const chain = CHAINS[targetChainId];
+                if (!chain) return showStatus("ไม่รองรับ Chain นี้", "error");
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: hexId,
+                            chainName: chain.name,
+                            nativeCurrency: { name: chain.symbol, symbol: chain.symbol, decimals: 18 },
+                            rpcUrls: [chain.rpc],
+                            blockExplorerUrls: [chain.explorer]
+                        }]
+                    });
+                } catch (addErr) { showStatus("เพิ่ม Network ไม่สำเร็จ: " + addErr.message, "error"); }
+            } else {
+                showStatus("เปลี่ยน Network ไม่สำเร็จ", "error");
+            }
+        }
+    };
+
+    return { ethersLib, provider, signer, account, balance, setBalance, isOwner, connectWallet, chainId, switchChain };
 }

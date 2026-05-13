@@ -5,7 +5,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,      // กำหนด Port (ปกติ Vite จะรันที่ 5173)
-    open: true       // ให้เปิด Browser อัตโนมัติเมื่อรัน
+    port: 5173,
+    open: true
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          'vendor-icons': ['lucide-react'],
+        }
+      }
+    }
   }
 })

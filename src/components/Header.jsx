@@ -1,8 +1,10 @@
 import React from 'react';
 import { Wallet, Shield, LogOut } from 'lucide-react';
 import { glassPanel, headingFont } from '../styles';
+import { CHAINS } from '../constants';
 
-export default function Header({ account, balance, isOwner, connectWallet }) {
+export default function Header({ account, balance, isOwner, connectWallet, chainId }) {
+    const nativeSymbol = CHAINS[chainId]?.symbol || 'ETH';
     return (
         <div className={`flex flex-col md:flex-row justify-between items-center p-6 rounded-2xl ${glassPanel}`}>
             <div className="flex items-center gap-4 mb-4 md:mb-0">
@@ -27,7 +29,7 @@ export default function Header({ account, balance, isOwner, connectWallet }) {
             <div className="flex items-center gap-4 w-full md:w-auto">
                 {account && (
                     <div className="hidden md:flex flex-col items-end">
-                        <span className={`text-sm font-bold text-white tracking-wide ${headingFont}`}>{balance} ETH</span>
+                        <span className={`text-sm font-bold text-white tracking-wide ${headingFont}`}>{balance} {nativeSymbol}</span>
                         <span className="text-[10px] text-emerald-400 uppercase tracking-wider flex items-center gap-1">Available <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div></span>
                     </div>
                 )}
