@@ -9,7 +9,7 @@ const TABS = [
     { id: 'news', icon: Newspaper, label: 'ข่าวสาร' },
     { id: 'community', icon: MessageSquare, label: 'ชุมชน' },
     { id: 'donate', icon: Heart, label: 'บริจาค' },
-    { id: 'admin', icon: Settings, label: 'บอดี้การ์ด (Admin)' },
+    { id: 'admin', icon: Settings, label: 'Admin Panel' },
 ];
 
 export default function TabBar({ activeTab, setActiveTab, isOwner }) {
