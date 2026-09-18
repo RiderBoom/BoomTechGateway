@@ -1,15 +1,91 @@
 <!doctype html>
-<html lang="th">
+<html lang="th" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BoomTech Gateway — Universal Crypto Protocol</title>
-    <meta name="description" content="BoomTech Gateway — กระเป๋าเงิน Crypto, ตลาด, ร้านค้า, ชุมชน และ AI สำหรับนักเทรดไทย" />
-    <meta property="og:title" content="BoomTech Gateway" />
-    <meta property="og:description" content="Universal Crypto Protocol — Wallet, Market, Shop, Community & AI" />
-    <meta property="og:type" content="website" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.svg" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#020617" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BoomTech" />
+
+    <!-- SEO Primary -->
+    <title>BoomTech Gateway — Universal Crypto Protocol | กระเป๋า Crypto ไทย</title>
+    <meta name="description" content="BoomTech Gateway — แพลตฟอร์ม Crypto ครบวงจรสำหรับนักเทรดไทย รองรับ Wallet, ตลาด Real-time, ร้านค้า, ชุมชน และ AI ใน 7 Blockchain networks" />
+    <meta name="keywords" content="crypto wallet thailand, กระเป๋า crypto, bitcoin ไทย, ethereum wallet, BNB Chain, DeFi Thailand, crypto trading, blockchain thai, NFT marketplace, boomtech" />
+    <meta name="author" content="BoomTech" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://boomtech.app" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://boomtech.app" />
+    <meta property="og:site_name" content="BoomTech Gateway" />
+    <meta property="og:title" content="BoomTech Gateway — Universal Crypto Protocol" />
+    <meta property="og:description" content="แพลตฟอร์ม Crypto ครบวงจร — Wallet, ตลาด, ร้านค้า, ชุมชน และ AI สำหรับนักเทรดไทย รองรับ 7 networks" />
+    <meta property="og:image" content="https://boomtech.app/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="BoomTech Gateway - Universal Crypto Protocol" />
+    <meta property="og:locale" content="th_TH" />
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@BoomTechApp" />
+    <meta name="twitter:creator" content="@BoomTechApp" />
+    <meta name="twitter:title" content="BoomTech Gateway — Universal Crypto Protocol" />
+    <meta name="twitter:description" content="แพลตฟอร์ม Crypto ครบวงจรสำหรับนักเทรดไทย — Wallet, ตลาด, ร้านค้า, ชุมชน &amp; AI" />
+    <meta name="twitter:image" content="https://boomtech.app/og-image.svg" />
+
+    <!-- Structured Data — WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "BoomTech Gateway",
+      "description": "Universal Crypto Protocol — Wallet, Market, Shop, Community & AI for Thai traders",
+      "url": "https://boomtech.app",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web Browser",
+      "inLanguage": "th",
+      "browserRequirements": "Requires JavaScript. MetaMask or Web3 wallet recommended.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "BoomTech",
+        "url": "https://boomtech.app"
+      },
+      "featureList": [
+        "Multi-chain Crypto Wallet",
+        "Real-time Market Data",
+        "Crypto Shop",
+        "Community Chat",
+        "AI Chatbot",
+        "BoomPet Game",
+        "Donation System"
+      ],
+      "screenshot": "https://boomtech.app/og-image.svg"
+    }
+    </script>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+    <link rel="preconnect" href="https://api.coingecko.com" />
+    <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
   </head>
   <body>
     <div id="root"></div>

@@ -1,9 +1,35 @@
+// ─── Sandbox / Demo Mode ────────────────────────────────────────────────────
+// true  = ระบบทดสอบ — ปิดการโอนเงินจริงทั้งหมด, แสดงแบนเนอร์คำเตือน
+// false = Production — เปิดการโอนเงินจริง (เปลี่ยนเฉพาะเมื่อพร้อม Launch จริง)
+export const SANDBOX_MODE = true;
+
 export const SHOP_WALLET_ADDRESS = "0xCEEcd5Fe0034F397B5A66a7BcD754B5B08a6cd70";
+
+// ─── EmailJS — ระบบแจ้งเตือนแอดมินทางอีเมล ────────────────────────────────
+// ตั้งค่าที่ https://www.emailjs.com (Free: 200 emails/month)
+// 1) สร้าง Email Service → คัดลอก Service ID
+// 2) สร้าง Email Template → คัดลอก Template ID
+// 3) Account → API Keys → คัดลอก Public Key
+export const EMAILJS_CONFIG = {
+    serviceId:  '',   // เช่น 'service_abc123'
+    templateId: '',   // เช่น 'template_xyz789'
+    publicKey:  '',   // เช่น 'AbCdEfGhIjKlMnOpQr'
+};
+export const ADMIN_EMAIL = 'boomzalnw2@gmail.com';
 export const PROMPTPAY_ID = "0950524447";
 export const USD_THB_RATE = 35.5;
 
+// ค่าธรรมเนียมแพลตฟอร์ม (0 = ฟรี)
+export const PLATFORM_FEE_PERCENT = 0;   // % ของจำนวนที่โอน
+export const PLATFORM_FEE_FIXED_ETH = 0; // ETH คงที่ต่อรายการ
+
 export const ADMIN_WALLETS = [
     "0xCEEcd5Fe0034F397B5A66a7BcD754B5B08a6cd70",
+];
+
+// Firebase UID ที่มีสิทธิ์ Admin (เข้า Admin Panel โดยไม่ต้อง connect MetaMask)
+export const ADMIN_FIREBASE_UIDS = [
+    "oP8h9aHKUBMZSifpWzroPbFuoEb2",
 ];
 
 export const ERC20_ABI = [
@@ -69,13 +95,13 @@ export const CHAINS = {
 };
 
 export const QUICK_COINS = [
-    { symbol: 'BTC', id: 'bitcoin' },
-    { symbol: 'ETH', id: 'ethereum' },
-    { symbol: 'BNB', id: 'binancecoin' },
-    { symbol: 'SOL', id: 'solana' },
+    { symbol: 'BTC',  id: 'bitcoin' },
+    { symbol: 'ETH',  id: 'ethereum' },
+    { symbol: 'BNB',  id: 'binancecoin' },
+    { symbol: 'SOL',  id: 'solana' },
     { symbol: 'DOGE', id: 'dogecoin' },
-    { symbol: 'GOLD', custom: 'OANDA:XAUUSD' },
-    { symbol: 'AAPL', custom: 'NASDAQ:AAPL' }
+    { symbol: 'XRP',  id: 'ripple' },
+    { symbol: 'ADA',  id: 'cardano' },
 ];
 
 export const INITIAL_PRODUCTS = [

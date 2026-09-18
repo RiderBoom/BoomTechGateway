@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Send, QrCode, ArrowRightLeft, RefreshCw, Copy, History, Layers, ExternalLink, AlertCircle } from 'lucide-react';
+import { Send, QrCode, ArrowRightLeft, RefreshCw, Copy, History, Layers, ExternalLink, AlertCircle, Info } from 'lucide-react';
 import { glassPanel, glassButton, glassInput, headingFont } from '../../styles';
-import { ERC20_ABI, CHAINS } from '../../constants';
+import { ERC20_ABI, CHAINS, SANDBOX_MODE } from '../../constants';
 import { recordTransaction } from '../../utils/recordTx';
 
 const CHAIN_LIST = Object.entries(CHAINS).map(([id, info]) => ({ id: parseInt(id), ...info }));
 
-export default function WalletTab({ account, provider, signer, ethersLib, balance, setBalance, transactions, db, appId, firebaseUser, isLoading, setIsLoading, showStatus, chainId, switchChain }) {
+export default function WalletTab({ account, provider, signer, ethersLib, balance, setBalance, transactions, db, appId, firebaseUser, isLoading, setIsLoading, showStatus, chainId, switchChain, feeSettings }) {
     const [walletMode, setWalletMode] = useState("transfer");
     const [transferType, setTransferType] = useState("NATIVE");
     const [recipient, setRecipient] = useState("");
@@ -17,6 +17,12 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
 
     const currentChain = CHAINS[chainId];
     const nativeSymbol = currentChain?.symbol || "ETH";
+
+    const feePercent = feeSettings?.platformFeePercent ?? 0;
+    const feeFixed   = feeSettings?.platformFeeFixed ?? 0;
+    const numAmount  = parseFloat(amount) || 0;
+    const feeEth     = numAmount * (feePercent / 100) + feeFixed;
+    const totalEth = numAmount + feeEth;
 
     useEffect(() => {
         const fetch = async () => {
@@ -37,9 +43,20 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
         if (!recipient || !amount) return showStatus("กรุณากรอกข้อมูลให้ครบ", "error");
         if (!ethersLib || !signer) return showStatus("กรุณาเชื่อมต่อกระเป๋าก่อน", "error");
         if (!ethersLib.utils.isAddress(recipient)) return showStatus("ที่อยู่ผู้รับไม่ถูกต้อง กรุณาตรวจสอบ", "error");
-        const numAmount = parseFloat(amount);
         if (isNaN(numAmount) || numAmount <= 0) return showStatus("จำนวนต้องมากกว่า 0", "error");
-        if (transferType === "NATIVE" && numAmount >= parseFloat(balance)) return showStatus(`ยอดเงินไม่พอ (มี ${balance} ${nativeSymbol})`, "error");
+        if (transferType === "NATIVE" && totalEth >= parseFloat(balance)) return showStatus(`ยอดเงินไม่พอ (มี ${balance} ${nativeSymbol})`, "error");
+
+        // ── Sandbox Mode: บันทึกจำลองเท่านั้น ไม่ส่ง tx จริง ──────────────
+        if (SANDBOX_MODE) {
+            setIsLoading(true);
+            await new Promise(r => setTimeout(r, 800));
+            await recordTransaction(db, appId, firebaseUser, account, `TRANSFER_${transferType === "NATIVE" ? nativeSymbol : "TOKEN"}`, amount, transferType === "NATIVE" ? nativeSymbol : tokenSymbol, recipient);
+            showStatus("🧪 [SANDBOX] จำลองการโอนสำเร็จ — ไม่มีการส่ง transaction จริง", "success");
+            setAmount("");
+            setIsLoading(false);
+            return;
+        }
+
         setIsLoading(true);
         showStatus("กำลังดำเนินการ...", "info");
         try {
@@ -68,10 +85,21 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
 
+            {/* Fee Info Banner */}
+            <div className={`p-3 rounded-xl flex items-center gap-3 bg-purple-900/20 border border-purple-500/20`}>
+                <Info className="w-4 h-4 text-purple-400 shrink-0" />
+                <div className="text-xs text-purple-200">
+                    <span className="font-bold text-purple-300">ค่าธรรมเนียมแพลตฟอร์ม:</span>{" "}
+                    {feePercent === 0 && feeFixed === 0
+                        ? "ฟรี 0% (คุณจ่ายเฉพาะค่า Gas ให้ Blockchain)"
+                        : `${feePercent}% + ${feeFixed} ETH ต่อรายการ`}
+                </div>
+            </div>
+
             {/* Network Selector */}
             <div className={`p-4 rounded-2xl ${glassPanel}`}>
                 <div className="flex items-center gap-2 mb-3">
-                    <Layers className="w-4 h-4 text-slate-400" />
+                    <Layers className="w-4 h-4 text-purple-400" />
                     <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">Select Network</span>
                     {chainId && !CHAINS[chainId] && (
                         <span className="flex items-center gap-1 text-xs text-yellow-400 ml-auto"><AlertCircle className="w-3 h-3" /> Unsupported Network</span>
@@ -81,7 +109,7 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
                     {CHAIN_LIST.map(chain => {
                         const isActive = chainId === chain.id;
                         return (
-                            <button key={chain.id} onClick={() => switchChain(chain.id)} className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border transition-all active:scale-95 ${isActive ? `${chain.bg} ${chain.border} shadow-lg` : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'}`}>
+                            <button key={chain.id} onClick={() => switchChain(chain.id)} className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border transition-all active:scale-95 ${isActive ? `${chain.bg} ${chain.border} shadow-lg` : 'bg-slate-800/50 border-slate-700/50 hover:border-purple-500/30'}`}>
                                 <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${chain.gradient} flex items-center justify-center shadow-md`}>
                                     <span className="text-white font-bold text-[10px]">{chain.shortName.slice(0,3)}</span>
                                 </div>
@@ -111,8 +139,8 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
             {/* Send / Receive Toggle */}
             <div className="flex justify-center">
                 <div className={`p-1 rounded-xl flex ${glassPanel}`}>
-                    <button onClick={() => setWalletMode('transfer')} className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${walletMode === 'transfer' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}`}><Send className="w-4 h-4" /> โอนเงิน (Send)</button>
-                    <button onClick={() => setWalletMode('deposit')} className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${walletMode === 'deposit' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}`}><QrCode className="w-4 h-4" /> รับเงิน (Receive)</button>
+                    <button onClick={() => setWalletMode('transfer')} className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${walletMode === 'transfer' ? 'bg-purple-600/40 text-white' : 'text-slate-400 hover:text-white'}`}><Send className="w-4 h-4" /> โอนเงิน (Send)</button>
+                    <button onClick={() => setWalletMode('deposit')} className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${walletMode === 'deposit' ? 'bg-purple-600/40 text-white' : 'text-slate-400 hover:text-white'}`}><QrCode className="w-4 h-4" /> รับเงิน (Receive)</button>
                 </div>
             </div>
 
@@ -121,10 +149,10 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
                     <div className="space-y-5">
                         {/* Token Type */}
                         <div className={`flex p-1 rounded-xl w-fit ${glassPanel}`}>
-                            <button onClick={() => setTransferType('NATIVE')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${transferType === 'NATIVE' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}`}>
+                            <button onClick={() => setTransferType('NATIVE')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${transferType === 'NATIVE' ? 'bg-purple-600/40 text-white' : 'text-slate-400 hover:text-white'}`}>
                                 {nativeSymbol} (Native)
                             </button>
-                            <button onClick={() => setTransferType('ERC20')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${transferType === 'ERC20' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}`}>
+                            <button onClick={() => setTransferType('ERC20')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${transferType === 'ERC20' ? 'bg-purple-600/40 text-white' : 'text-slate-400 hover:text-white'}`}>
                                 Token (ERC-20)
                             </button>
                         </div>
@@ -146,16 +174,23 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
                             <label className="block text-sm text-slate-400 mb-1 ml-1">จำนวน (Amount)</label>
                             <div className="relative">
                                 <input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className={`w-full rounded-xl px-4 py-3 pr-20 font-mono text-sm ${glassInput}`} />
-                                <span className={`absolute right-4 top-3.5 text-sm font-bold ${currentChain?.color || 'text-slate-400'}`}>
+                                <span className={`absolute right-4 top-3.5 text-sm font-bold ${currentChain?.color || 'text-purple-400'}`}>
                                     {transferType === 'NATIVE' ? nativeSymbol : tokenSymbol}
                                 </span>
                             </div>
+                            {transferType === 'NATIVE' && numAmount > 0 && (
+                                <div className="mt-2 px-3 py-2 rounded-lg bg-purple-950/30 border border-purple-500/10 text-xs space-y-1">
+                                    <div className="flex justify-between text-slate-400"><span>จำนวนที่โอน</span><span className="font-mono">{numAmount.toFixed(6)} {nativeSymbol}</span></div>
+                                    <div className="flex justify-between text-slate-400"><span>ค่าธรรมเนียมแพลตฟอร์ม</span><span className="font-mono text-emerald-400">ฟรี 0%</span></div>
+                                    <div className="flex justify-between text-purple-300 font-bold border-t border-purple-500/10 pt-1"><span>รวมทั้งหมด (ไม่รวม Gas)</span><span className="font-mono">{totalEth.toFixed(6)} {nativeSymbol}</span></div>
+                                </div>
+                            )}
                             {transferType === 'NATIVE' && (
                                 <p className="text-xs text-slate-500 mt-1 text-right">Available: {balance} {nativeSymbol}</p>
                             )}
                         </div>
 
-                        <button onClick={handleTransfer} disabled={isLoading || !recipient || !amount || !account} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <button onClick={handleTransfer} disabled={isLoading || !recipient || !amount || !account} className="w-full bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-500 hover:to-violet-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30">
                             {isLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ArrowRightLeft className="w-5 h-5" />}
                             {isLoading ? "กำลังโอน..." : `Send ${transferType === 'NATIVE' ? nativeSymbol : tokenSymbol}`}
                         </button>
@@ -165,10 +200,10 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
 
                     {/* Tx History */}
                     <div className={`rounded-xl p-4 flex flex-col max-h-[500px] ${glassPanel}`}>
-                        <h3 className={`text-white font-bold mb-4 flex items-center gap-2 ${headingFont}`}><History className="w-5 h-5 text-slate-400"/> ประวัติธุรกรรมล่าสุด</h3>
+                        <h3 className={`text-white font-bold mb-4 flex items-center gap-2 ${headingFont}`}><History className="w-5 h-5 text-purple-400"/> ประวัติธุรกรรมล่าสุด</h3>
                         <div className="flex-1 overflow-y-auto space-y-3 pr-2">
                             {transactions.length === 0 ? <p className="text-slate-500 text-center py-10">ยังไม่มีรายการ</p> : transactions.map(tx => (
-                                <div key={tx.id} className="bg-slate-950/50 p-3 rounded-lg border border-slate-700/50 text-sm">
+                                <div key={tx.id} className="bg-slate-950/50 p-3 rounded-lg border border-purple-500/10 text-sm">
                                     <div className="flex justify-between mb-1">
                                         <span className={`font-bold ${tx.type.includes('BUY') ? 'text-pink-400' : 'text-emerald-400'}`}>{tx.type}</span>
                                         <span className="text-slate-500 text-xs">{new Date(tx.timestamp).toLocaleTimeString()}</span>
@@ -197,10 +232,10 @@ export default function WalletTab({ account, provider, signer, ethersLib, balanc
                     ) : (
                         <div className="w-64 h-64 bg-slate-800/50 rounded-3xl flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-700"><p>กรุณาเชื่อมต่อกระเป๋า</p></div>
                     )}
-                    <div className="w-full max-w-md bg-slate-950 p-6 rounded-2xl border border-slate-800 flex flex-col gap-3">
+                    <div className="w-full max-w-md bg-slate-950 p-6 rounded-2xl border border-purple-500/10 flex flex-col gap-3">
                         <span className="text-sm text-slate-400 font-medium">Wallet Address (รองรับทุก EVM Chain)</span>
                         <div className="flex items-center gap-3">
-                            <code className="flex-1 font-mono text-emerald-400 break-all bg-emerald-900/10 p-3 rounded-lg border border-emerald-500/20 text-sm">{account || "ยังไม่เชื่อมต่อ"}</code>
+                            <code className="flex-1 font-mono text-purple-300 break-all bg-purple-900/10 p-3 rounded-lg border border-purple-500/20 text-sm">{account || "ยังไม่เชื่อมต่อ"}</code>
                             <button onClick={() => { navigator.clipboard.writeText(account); showStatus("คัดลอกแล้ว", "success"); }} className={`p-3 rounded-lg flex-shrink-0 ${glassButton}`}><Copy className="w-5 h-5" /></button>
                         </div>
                         <p className="text-xs text-slate-500 text-center">Address เดียวกันใช้ได้กับทุก Chain ด้านบน</p>

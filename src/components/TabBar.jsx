@@ -12,16 +12,24 @@ const TABS = [
     { id: 'admin', icon: Settings, label: 'Admin Panel' },
 ];
 
-export default function TabBar({ activeTab, setActiveTab, isOwner }) {
+export default function TabBar({ activeTab, setActiveTab, isOwner, tabsConfig = {} }) {
     return (
-        <div className="flex border-b border-slate-800 overflow-x-auto scrollbar-hide">
+        <div className="flex border-b border-indigo-500/10 overflow-x-auto scrollbar-hide bg-indigo-950/10">
             {TABS.map(tab => {
                 if (tab.id === 'admin' && !isOwner) return null;
+                if (tab.id !== 'admin' && tabsConfig[tab.id] === false) return null;
+                const isActive = activeTab === tab.id;
                 return (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-w-[100px] py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors relative ${activeTab === tab.id ? 'text-white bg-slate-800/50' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'}`}>
-                        <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-blue-400' : ''}`} />
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex-1 min-w-[100px] py-4 text-sm font-medium flex items-center justify-center gap-2 transition-all relative ${isActive ? 'text-white bg-indigo-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-indigo-500/5'}`}
+                    >
+                        <tab.icon className={`w-4 h-4 ${isActive ? 'text-indigo-400' : ''}`} />
                         {tab.label}
-                        {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 shadow-[0_-2px_10px_rgba(59,130,246,0.5)]"></div>}
+                        {isActive && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 shadow-[0_-2px_10px_rgba(168,85,247,0.5)]"></div>
+                        )}
                     </button>
                 );
             })}

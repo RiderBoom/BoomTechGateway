@@ -1,0 +1,56 @@
+{
+  "name": "BoomTech Gateway",
+  "short_name": "BoomTech",
+  "description": "Universal Crypto Protocol — Wallet, Market, Shop, Community & AI for Thai traders",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#060c18",
+  "theme_color": "#020617",
+  "lang": "th",
+  "dir": "ltr",
+  "categories": ["finance", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "กระเป๋าเงิน Crypto",
+      "short_name": "Wallet",
+      "url": "/#wallet",
+      "description": "จัดการ Crypto Wallet และดูยอดคงเหลือ"
+    },
+    {
+      "name": "ราคาตลาด",
+      "short_name": "Market",
+      "url": "/#market",
+      "description": "ราคา Crypto แบบ Real-time"
+    },
+    {
+      "name": "ร้านค้า",
+      "short_name": "Shop",
+      "url": "/#shop",
+      "description": "ซื้อสินค้าด้วย Crypto"
+    },
+    {
+      "name": "ชุมชน",
+      "short_name": "Community",
+      "url": "/#community",
+      "description": "พูดคุยกับชุมชนนักเทรด"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

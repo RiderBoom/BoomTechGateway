@@ -1,53 +1,109 @@
-/* 1. นำเข้าฟอนต์ Google Fonts: Sora (สำหรับหัวข้อ) และ Outfit (สำหรับเนื้อหา) */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background-color: #020617;
+  background-color: #060c18;
   color: #e2e8f0;
   font-family: 'Outfit', sans-serif;
   margin: 0;
   padding: 0;
   background-image:
-    radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.12) 0%, transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.12) 0%, transparent 25%);
+    radial-gradient(ellipse at 5%  0%,  rgba(79,  70, 229, 0.20) 0%, transparent 40%),
+    radial-gradient(ellipse at 95% 5%,  rgba(109, 40, 217, 0.14) 0%, transparent 35%),
+    radial-gradient(ellipse at 50% 100%,rgba(67,  56, 202, 0.12) 0%, transparent 40%);
   background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* 3. ตั้งค่าหัวข้อและตัวเลขให้ใช้ฟอนต์ Sora (ดู Tech ขึ้น) */
-h1, h2, h3, h4, h5, h6, .font-heading, .font-mono {
+h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: 'Sora', sans-serif;
-  letter-spacing: -0.02em; /* บีบตัวอักษรนิดหน่อยให้ดูแน่นและโปร */
+  letter-spacing: -0.02em;
 }
 
-/* 4. ปรับแต่ง Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent; 
-}
-::-webkit-scrollbar-thumb {
-  background: #334155; 
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #475569; 
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #312e81; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #4338ca; }
+
+/* ── Focus ring ─────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* 5. Utility Class สำหรับ Glass Effect (กระจกฝ้า) */
+/* ── Selection ──────────────────────────────────────── */
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+  color: #e0e7ff;
+}
+
+/* ── Shimmer skeleton ───────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, rgba(99,102,241,0.05) 25%, rgba(99,102,241,0.12) 50%, rgba(99,102,241,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* ── Utilities ──────────────────────────────────────── */
+.scrollbar-hide { scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 @layer components {
   .glass-panel {
-    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-indigo-950/20 backdrop-blur-xl border border-indigo-500/10 shadow-2xl shadow-indigo-900/10;
   }
   .glass-button {
-    @apply bg-white/5 hover:bg-white/10 border border-white/5 backdrop-blur-md transition-all active:scale-95;
+    @apply bg-white/5 hover:bg-indigo-500/10 border border-indigo-500/10 backdrop-blur-md transition-all duration-200 active:scale-95;
   }
   .glass-input {
-    @apply bg-slate-950/50 border border-white/10 focus:border-cyan-500/50 outline-none transition-all;
+    @apply bg-slate-950/60 border border-indigo-500/10 focus:border-indigo-400/50 outline-none transition-all duration-200 text-slate-200 placeholder-slate-500;
   }
+  .btn-primary {
+    @apply px-5 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-900/30 transition-all duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-indigo-500;
+  }
+  .btn-ghost {
+    @apply px-5 py-2.5 rounded-xl font-semibold bg-indigo-900/20 hover:bg-indigo-900/40 border border-indigo-500/20 text-indigo-300 transition-all duration-200 active:scale-95;
+  }
+  .card {
+    @apply glass-panel rounded-2xl overflow-hidden;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg border;
+  }
+  .badge-indigo {
+    @apply badge bg-indigo-900/40 border-indigo-500/30 text-indigo-300;
+  }
+  .badge-emerald {
+    @apply badge bg-emerald-900/30 border-emerald-500/30 text-emerald-400;
+  }
+  .badge-red {
+    @apply badge bg-red-900/30 border-red-500/30 text-red-400;
+  }
+  .badge-yellow {
+    @apply badge bg-yellow-900/30 border-yellow-500/30 text-yellow-400;
+  }
+  .tag-chain {
+    @apply badge-indigo font-mono text-[10px] tracking-wider;
+  }
+}
+
+/* ── Print ──────────────────────────────────────────── */
+@media print {
+  body { background: white; color: black; }
+  .glass-panel, .card { border: 1px solid #ccc; }
 }

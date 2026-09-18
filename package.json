@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "ethers": "^5.7.2",
+    "fast-xml-parser": "^5.8.0",
     "firebase": "^12.7.0",
+    "firebase-admin": "^13.10.0",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

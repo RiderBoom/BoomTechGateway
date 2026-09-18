@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function useMarket(activeTab) {
     const [selectedCoin, setSelectedCoin] = useState("ethereum");
@@ -7,12 +7,14 @@ export function useMarket(activeTab) {
     const [coinInput, setCoinInput] = useState("");
     const [coinImage, setCoinImage] = useState("https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880");
     const [currentPrice, setCurrentPrice] = useState(0);
+    // ราคาของ ETH สำหรับ checkout ต้องไม่ผูกกับเหรียญที่ผู้ใช้กำลังดูในหน้า Market
+    const [ethUsdPrice, setEthUsdPrice] = useState(0);
     const [priceChange, setPriceChange] = useState(0);
     const [marketStats, setMarketStats] = useState({ marketCap: 0, totalVolume: 0, high24h: 0, low24h: 0, ath: 0 });
     const [fearGreed, setFearGreed] = useState({ value: 0, status: "Neutral" });
     const [isMarketLoading, setIsMarketLoading] = useState(false);
 
-    const fetchPriceData = async () => {
+    const fetchPriceData = useCallback(async () => {
         if (isCustomSymbol) return;
         setIsMarketLoading(true);
         try {
@@ -32,15 +34,31 @@ export function useMarket(activeTab) {
             }
         } catch (e) { console.error("Price data error", e); }
         finally { setTimeout(() => setIsMarketLoading(false), 500); }
-    };
+    }, [isCustomSymbol, selectedCoin]);
 
-    const fetchGlobalData = async () => {
+    const fetchGlobalData = useCallback(async () => {
         try {
             const res = await fetch("https://api.alternative.me/fng/?limit=1");
             const data = await res.json();
             if (data.data?.length > 0) setFearGreed({ value: parseInt(data.data[0].value), status: data.data[0].value_classification });
-        } catch (e) {}
-    };
+        } catch { /* optional market sentiment data */ }
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const fetchEthPrice = async () => {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+                const data = await response.json();
+                if (!cancelled && Number.isFinite(data?.ethereum?.usd)) setEthUsdPrice(data.ethereum.usd);
+            } catch (error) {
+                console.warn('ETH price unavailable', error);
+            }
+        };
+        fetchEthPrice();
+        const interval = window.setInterval(fetchEthPrice, 60_000);
+        return () => { cancelled = true; window.clearInterval(interval); };
+    }, []);
 
     const handleSearchCoin = async (e) => {
         e.preventDefault();
@@ -64,12 +82,12 @@ export function useMarket(activeTab) {
             const interval = setInterval(fetchPriceData, 30000);
             return () => clearInterval(interval);
         }
-    }, [activeTab, selectedCoin, isCustomSymbol]);
+    }, [activeTab, fetchGlobalData, fetchPriceData, isCustomSymbol]);
 
     return {
         selectedCoin, setSelectedCoin, coinSymbol, setCoinSymbol,
         isCustomSymbol, setIsCustomSymbol, coinInput, setCoinInput,
-        coinImage, currentPrice, priceChange, marketStats, fearGreed,
+        coinImage, currentPrice, ethUsdPrice, priceChange, marketStats, fearGreed,
         isMarketLoading, fetchPriceData, handleSearchCoin
     };
 }

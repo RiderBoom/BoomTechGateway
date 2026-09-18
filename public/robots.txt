@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Block admin paths from indexing
+Disallow: /#admin
+
+# Crawl-delay for considerate bots
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://boomtech.app/sitemap.xml

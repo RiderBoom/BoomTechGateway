@@ -1,16 +1,43 @@
 import { useState, useEffect } from 'react';
 
 const STAGES = {
-    egg: { next: "baby", reqExp: 10 },
-    baby: { next: "rookie", reqExp: 100 },
-    rookie: { next: "champion", reqExp: 300 },
+    egg:      { next: "baby",     reqExp: 10 },
+    baby:     { next: "rookie",   reqExp: 100 },
+    rookie:   { next: "champion", reqExp: 300 },
     champion: { next: "ultimate", reqExp: 800 },
-    ultimate: { next: null, reqExp: 9999 }
+    ultimate: { next: null,       reqExp: 9999 }
 };
 
+const DEFAULT_PET = { name: "Egg", stage: "egg", hunger: 100, energy: 100, happiness: 100, exp: 0, age: 0, isSleeping: false, lastTick: Date.now() };
+const PET_KEY   = 'boompet_state';
+const SCORE_KEY = 'boompet_score';
+
+function loadPet() {
+    try {
+        const saved = localStorage.getItem(PET_KEY);
+        return saved ? { ...DEFAULT_PET, ...JSON.parse(saved), lastTick: Date.now() } : { ...DEFAULT_PET };
+    } catch { return { ...DEFAULT_PET }; }
+}
+
+function loadScore() {
+    try { return parseInt(localStorage.getItem(SCORE_KEY) || '0', 10); }
+    catch { return 0; }
+}
+
 export function usePet(account, showStatus) {
-    const [gameScore, setGameScore] = useState(0);
-    const [pet, setPet] = useState({ name: "Egg", stage: "egg", hunger: 100, energy: 100, happiness: 100, exp: 0, age: 0, isSleeping: false, lastTick: Date.now() });
+    const [gameScore, setGameScore] = useState(loadScore);
+    const [pet, setPet] = useState(loadPet);
+
+    // บันทึกสถานะ pet ลง localStorage ทุกครั้งที่เปลี่ยน
+    useEffect(() => {
+        try { localStorage.setItem(PET_KEY, JSON.stringify(pet)); }
+        catch { /* storage can be unavailable in private browsing */ }
+    }, [pet]);
+
+    useEffect(() => {
+        try { localStorage.setItem(SCORE_KEY, String(gameScore)); }
+        catch { /* storage can be unavailable in private browsing */ }
+    }, [gameScore]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -29,7 +56,7 @@ export function usePet(account, showStatus) {
             });
         }, 3000);
         return () => clearInterval(interval);
-    }, [pet.stage, pet.isSleeping]);
+    }, [pet.stage, pet.isSleeping, showStatus]);
 
     const handleAction = (action) => {
         if (!account) return showStatus("Login First!", "error");
@@ -56,7 +83,7 @@ export function usePet(account, showStatus) {
                     showStatus("Training! แข็งแกร่งขึ้น (+Exp)", "success");
                     break;
                 case 'sleep': next.isSleeping = true; showStatus("Good Night! zZZ", "info"); break;
-                case 'wake': next.isSleeping = false; showStatus("ตื่นแล้ว!", "info"); break;
+                case 'wake':  next.isSleeping = false; showStatus("ตื่นแล้ว!", "info"); break;
                 default: break;
             }
             const stage = STAGES[next.stage];

@@ -1,12 +1,13 @@
-import React, { useRef, useEffect, useMemo } from 'react';
-import { Search, RefreshCw, TrendingUp, Coins, Gauge, Globe, ExternalLink } from 'lucide-react';
+import React, { useRef, useEffect, useId } from 'react';
+import { Search, RefreshCw, TrendingUp, Coins, Gauge, Globe, ExternalLink, AlertTriangle } from 'lucide-react';
 import { glassPanel, glassButton, glassInput, headingFont } from '../../styles';
 import { QUICK_COINS } from '../../constants';
 import { formatNumber } from '../../utils/recordTx';
 
 function TradingViewWidget({ symbol, isCustom }) {
     const containerRef = useRef(null);
-    const containerId = useMemo(() => `tv-${Math.random().toString(36).substr(2, 9)}`, []);
+    const reactId = useId();
+    const containerId = `tv-${reactId.replace(/:/g, '')}`;
     useEffect(() => {
         let tvInterval;
         const load = () => {
@@ -20,16 +21,27 @@ function TradingViewWidget({ symbol, isCustom }) {
             const s = document.createElement("script"); s.id = 'tv-script'; s.src = "https://s3.tradingview.com/tv.js"; s.async = true; s.onload = load; document.head.appendChild(s);
         } else { if (window.TradingView) load(); else { tvInterval = setInterval(() => { if (window.TradingView) { clearInterval(tvInterval); load(); } }, 200); } }
         return () => { if (tvInterval) clearInterval(tvInterval); };
-    }, [symbol, isCustom]);
+    }, [symbol, isCustom, containerId]);
     return <div id={containerId} ref={containerRef} className="w-full h-[600px] bg-slate-900 rounded-xl overflow-hidden border border-slate-700" />;
 }
 
 export default function MarketTab({ selectedCoin, setSelectedCoin, coinSymbol, setCoinSymbol, isCustomSymbol, setIsCustomSymbol, coinInput, setCoinInput, coinImage, currentPrice, priceChange, marketStats, fearGreed, isMarketLoading, fetchPriceData, handleSearchCoin }) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+            {/* Disclaimer */}
+            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-yellow-900/10 border border-yellow-700/30 text-yellow-300/80 text-xs leading-relaxed">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-yellow-500"/>
+                <span>
+                    ข้อมูลราคาและกราฟแสดงเพื่อ<strong>ข้อมูลอ้างอิงเท่านั้น</strong> ไม่ถือเป็นคำแนะนำการลงทุน
+                    การลงทุนในสินทรัพย์ดิจิทัลมีความเสี่ยงสูง ผู้ลงทุนควรศึกษาข้อมูลและตัดสินใจด้วยตนเอง
+                    BoomTech Gateway ไม่รับผิดชอบต่อความเสียหายที่เกิดจากการตัดสินใจลงทุน
+                </span>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <form onSubmit={handleSearchCoin} className="relative flex-1">
-                    <input type="text" placeholder="พิมพ์ชื่อเหรียญ (เช่น BTC, Ethereum) หรือ Symbol (NASDAQ:AAPL)..." value={coinInput} onChange={(e) => setCoinInput(e.target.value)} className={`w-full rounded-xl pl-12 pr-4 py-3 ${glassInput}`} />
+                    <input type="text" placeholder="พิมพ์ชื่อเหรียญ (เช่น BTC, ETH, BNB, Solana)..." value={coinInput} onChange={(e) => setCoinInput(e.target.value)} className={`w-full rounded-xl pl-12 pr-4 py-3 ${glassInput}`} />
                     <Search className="w-5 h-5 text-slate-500 absolute left-4 top-3.5" />
                     <button type="submit" className="absolute right-2 top-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-medium">ค้นหา</button>
                 </form>
@@ -77,9 +89,13 @@ export default function MarketTab({ selectedCoin, setSelectedCoin, coinSymbol, s
                 <div className="bg-slate-950/95 backdrop-blur-md rounded-[14px] p-4 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="bg-[#F0B90B] p-2.5 rounded-xl text-slate-900 shrink-0"><svg viewBox="0 0 32 32" className="w-8 h-8 fill-current"><path d="M16 0l6 6-6 6-6-6 6-6zM6 6l6 6-6 6-6-6 6-6zM26 6l6 6-6 6-6-6 6-6zM16 12l6 6-6 6-6-6 6-6zM6 18l6 6-6 6-6-6 6-6zM26 18l6 6-6 6-6-6 6-6zM16 24l6 6-6 6-6-6 6-6z"/></svg></div>
-                        <div><h3 className={`text-lg font-bold text-white ${headingFont}`}>เทรดคริปโตอันดับ 1 กับ <span className="text-[#F0B90B]">Binance</span></h3><p className="text-sm text-slate-400">ค่าธรรมเนียมต่ำ ปลอดภัย รองรับภาษาไทย</p></div>
+                        <div>
+                            <h3 className={`text-lg font-bold text-white ${headingFont}`}>เทรดคริปโตกับ <span className="text-[#F0B90B]">Binance</span></h3>
+                            <p className="text-sm text-slate-400">ค่าธรรมเนียมต่ำ รองรับหลายคู่เทรด</p>
+                            <p className="text-[10px] text-slate-600 mt-0.5">⚠ Binance ไม่ได้รับใบอนุญาตจาก ก.ล.ต. ไทย — ใช้บริการด้วยความเข้าใจความเสี่ยง</p>
+                        </div>
                     </div>
-                    <a href="https://www.binance.com/en/register?ref=GRO_28502_6PQ0U" target="_blank" rel="noreferrer" className="bg-[#F0B90B] hover:bg-[#D9A507] text-slate-900 font-bold px-6 py-3 rounded-xl flex items-center gap-2 whitespace-nowrap">สมัครเลย <ExternalLink className="w-4 h-4"/></a>
+                    <a href="https://www.binance.com/en/register?ref=GRO_28502_6PQ0U" target="_blank" rel="noreferrer" className="bg-[#F0B90B] hover:bg-[#D9A507] text-slate-900 font-bold px-6 py-3 rounded-xl flex items-center gap-2 whitespace-nowrap">เยี่ยมชม <ExternalLink className="w-4 h-4"/></a>
                 </div>
             </div>
 

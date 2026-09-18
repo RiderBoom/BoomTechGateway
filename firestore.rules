@@ -1,0 +1,195 @@
+rules_version = '2';
+
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  boomtech.app — Firestore Security Rules                                ║
+// ║                                                                          ║
+// ║  Path structure:                                                         ║
+// ║    public  → artifacts/{appId}/public/data/{collection}/{docId}         ║
+// ║    private → artifacts/{appId}/private/logs/access_logs/{docId}        ║
+// ║                                                                          ║
+// ║  ⚠️  Admin Authentication — อ่าน section "ADMIN SETUP" ด้านล่างก่อน    ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ══════════════════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ตรวจสอบว่า sign in แล้ว (anonymous หรือ custom token)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // ADMIN SETUP
+    // ══════════════════════════════════════════════════════════════════════
+    //
+    // Admin รับรองได้ 2 วิธี (OR กัน):
+    //
+    // [A] Firebase Custom Claim — admin: true
+    //     ตั้งค่าผ่าน api/set-admin-claim.js (Vercel serverless)
+    //     + MetaMask wallet signature จาก ADMIN_WALLETS
+    //
+    // [B] UID Allowlist — ระบุ UID โดยตรงใน ADMIN_UIDS ด้านล่าง
+    //     ไม่ต้องตั้งค่า Custom Claims หรือ MetaMask
+    //     เหมาะสำหรับ admin ที่ login ผ่าน Google / Phone OTP
+    //
+    // ══════════════════════════════════════════════════════════════════════
+
+    // [B] UID Allowlist — เพิ่ม / ลบ UID ตรงนี้
+    // หากมีหลาย UID ใช้รูปแบบ: uid == "A" || uid == "B"
+    function isAdminUid() {
+      return request.auth.uid == "oP8h9aHKUBMZSifpWzroPbFuoEb2";
+    }
+
+    // [A] Custom Claim
+    function isAdminClaim() {
+      return request.auth.token.get('admin', false) == true;
+    }
+
+    // รวมทั้ง 2 วิธี — ถ้าตรงอย่างใดอย่างหนึ่งถือว่าเป็น admin
+    function isAdmin() {
+      return isAuthenticated() && (isAdminClaim() || isAdminUid());
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    // ป้องกัน path ที่ไม่ได้ระบุทั้งหมด (default deny)
+    // ──────────────────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // PUBLIC DATA
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /artifacts/{appId}/public/data {
+
+      // ── Community Chat ─────────────────────────────────────────────────
+      match /community_chat/{msgId} {
+        // อ่านได้ทุกคนที่ sign in (anonymous ก็ได้)
+        allow read: if isAuthenticated();
+
+        // สร้างข้อความ: ต้องมีครบ 3 field หลัก, text ไม่เกิน 2,000 chars
+        // ห้าม set contentStatus/takedownBy ตอน create (ป้องกัน bypass hide)
+        allow create: if isAuthenticated()
+          && request.resource.data.keys().hasAll(['text', 'sender', 'timestamp'])
+          && request.resource.data.keys().hasOnly(['text', 'image', 'sender', 'walletAddress', 'isWallet', 'avatar', 'timestamp'])
+          && request.resource.data.timestamp is number
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 2000
+          && (!('image' in request.resource.data) || request.resource.data.image == null || (request.resource.data.image is string && request.resource.data.image.size() <= 700000))
+          && (!('sender' in request.resource.data) || request.resource.data.sender.size() <= 80)
+          && !('contentStatus' in request.resource.data)
+          && !('takedownBy'    in request.resource.data)
+          && !('takedownAt'    in request.resource.data);
+
+        // อัปเดต (ซ่อน/คืนสถานะ) และลบ: admin เท่านั้น
+        allow update, delete: if isAdmin();
+      }
+
+      // ── Transactions (immutable — ห้าม update/delete) ──────────────────
+      // ⚠️ PDPA: ข้อมูล shipping address และ uid เป็นข้อมูลส่วนบุคคล
+      //   → Admin อ่านได้ทั้งหมด
+      //   → User อ่านได้เฉพาะของตัวเอง (uid ตรงกัน)
+      //   → คนอื่น อ่านไม่ได้
+      match /transactions/{txId} {
+        allow read: if isAdmin()
+          || (isAuthenticated() && resource.data.uid == request.auth.uid);
+
+        // สร้าง transaction: ต้องมี uid ตรงกับผู้ส่ง (ป้องกัน spoof uid)
+        allow create: if isAuthenticated()
+          && request.resource.data.keys().hasAll(['timestamp', 'from', 'type', 'uid'])
+          && request.resource.data.keys().hasOnly(['timestamp', 'from', 'type', 'uid', 'amount', 'token', 'to', 'details', 'shippingAddress', 'paymentStatus'])
+          && request.resource.data.timestamp is number
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.type is string
+          && request.resource.data.type.size() <= 64
+          && request.resource.data.from is string
+          && request.resource.data.from.size() <= 128
+          && (!('amount' in request.resource.data) || request.resource.data.amount is number || request.resource.data.amount is string)
+          && (!('token' in request.resource.data) || (request.resource.data.token is string && request.resource.data.token.size() <= 32))
+          && (!('to' in request.resource.data) || (request.resource.data.to is string && request.resource.data.to.size() <= 128))
+          && (!('details' in request.resource.data) || (request.resource.data.details is string && request.resource.data.details.size() <= 4000))
+          && (!('shippingAddress' in request.resource.data) || request.resource.data.shippingAddress == null || (request.resource.data.shippingAddress is string && request.resource.data.shippingAddress.size() <= 2000))
+          && (!('paymentStatus' in request.resource.data) || request.resource.data.paymentStatus in ['sandbox_demo', 'pending_verification']);
+
+        // Admin อัปเดตได้เฉพาะ paymentStatus (ยืนยัน/ปฏิเสธ PromptPay)
+        // เขียนได้เฉพาะ field ที่อนุญาต — ป้องกัน admin เปลี่ยน amount/from/uid
+        allow update: if isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['paymentStatus', 'confirmedBy', 'confirmedAt', 'rejectedBy', 'rejectedAt']);
+
+        // ห้ามลบเด็ดขาด (audit trail)
+        allow delete: if false;
+      }
+
+      // ── Products ────────────────────────────────────────────────────────
+      match /products/{productId} {
+        allow read: if isAuthenticated();
+        allow create, update, delete: if isAdmin();
+      }
+
+      // ── App Settings (fees / tabs / payment / collections) ──────────────
+      match /app_settings/{settingId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      // ── Banned Users ────────────────────────────────────────────────────
+      // ต้องอ่านได้ client-side เพื่อตรวจสอบก่อน chat/submit
+      match /banned_users/{userId} {
+        allow read: if isAuthenticated();
+        allow create, update, delete: if isAdmin();
+      }
+
+      // ── Reports ─────────────────────────────────────────────────────────
+      match /reports/{reportId} {
+        // สร้างรายงาน: ต้อง sign in, status ต้องเป็น 'pending' เสมอ
+        allow create: if isAuthenticated()
+          && request.resource.data.keys().hasAll(['reason', 'timestamp', 'reportedBy'])
+          && request.resource.data.keys().hasOnly(['reason', 'reasonLabel', 'details', 'reportedBy', 'targetId', 'targetType', 'targetContent', 'targetSender', 'targetWallet', 'status', 'timestamp'])
+          && request.resource.data.timestamp is number
+          && request.resource.data.reason   is string
+          && request.resource.data.reason.size() <= 40
+          && request.resource.data.reportedBy is string
+          && request.resource.data.reportedBy.size() <= 128
+          && (!('details' in request.resource.data) || (request.resource.data.details is string && request.resource.data.details.size() <= 300))
+          && request.resource.data.status   == 'pending';
+
+        // อ่าน อัปเดต ลบ: admin เท่านั้น
+        allow read, update, delete: if isAdmin();
+      }
+
+      // ── Takedown Log (immutable audit trail) ────────────────────────────
+      // บันทึกทางกฎหมายตาม พ.ร.บ. คอมพิวเตอร์ มาตรา 15
+      // สร้างได้โดย admin, ห้าม update/delete โดยใครทั้งนั้น
+      match /takedown_log/{logId} {
+        allow read:   if isAdmin();
+        allow create: if isAdmin()
+          && request.resource.data.keys().hasAll(['action', 'actionAt', 'actionBy', 'contentId'])
+          && request.resource.data.actionAt is number;
+
+        // IMMUTABLE — ห้ามแก้ไขหรือลบเด็ดขาด แม้แต่ admin
+        allow update, delete: if false;
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // PRIVATE LOGS — Access Logs (พ.ร.บ. คอมพิวเตอร์ มาตรา 26)
+    // ══════════════════════════════════════════════════════════════════════
+    //
+    // เขียนผ่าน Firebase Admin SDK จาก api/log.js เท่านั้น
+    // Admin SDK bypass Security Rules อยู่แล้ว → rule นี้ป้องกัน client access
+    //
+    // ⚠️ อย่า expose collection นี้ผ่าน client SDK เด็ดขาด
+    //    เพราะมี IP address และข้อมูลที่ต้องคุ้มครองตาม PDPA
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /artifacts/{appId}/private/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

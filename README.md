@@ -1,16 +1,28 @@
-# React + Vite
+# BoomTech Gateway
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+BoomTech Gateway is a React/Vite sandbox for wallet connectivity, market data, shop flows, community moderation, and donations. `SANDBOX_MODE` is enabled by default: no real transfer should be promoted or accepted until payment verification is implemented server-side.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm ci
+npm run dev
+npm run lint
+npm run build
+```
 
-## React Compiler
+## Deployment configuration
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Deploy the frontend and `/api` endpoints on Vercel. Create environment variables from `.env.example` in Vercel Project Settings:
 
-## Expanding the ESLint configuration
+- `FIREBASE_SERVICE_ACCOUNT`: complete Firebase service-account JSON, for server-side logging and admin claims.
+- `FIREBASE_APP_ID`: the only permitted Firestore app namespace for `/api/log`.
+- `PUBLIC_APP_ORIGIN`: canonical public origin used by the logging endpoint CORS policy.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Deploy Firestore rules separately with the Firebase CLI after reviewing them:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+Never commit service-account credentials or production `.env` files.

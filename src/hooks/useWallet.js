@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ADMIN_WALLETS, CHAINS } from '../constants';
 
 export function useWallet(showStatus) {
@@ -10,27 +10,54 @@ export function useWallet(showStatus) {
     const [isOwner, setIsOwner] = useState(false);
     const [chainId, setChainId] = useState(null);
 
-    useEffect(() => {
-        if (typeof ethers !== 'undefined') { setEthersLib(ethers); return; }
-        if (window.ethers) { setEthersLib(window.ethers); return; }
-        const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js";
-        script.async = true;
-        script.onload = () => { if (window.ethers) setEthersLib(window.ethers); };
-        document.body.appendChild(script);
-    }, []);
+    const loadEthers = useCallback(async () => {
+        if (ethersLib) return ethersLib;
+        const { ethers } = await import('ethers');
+        setEthersLib(ethers);
+        return ethers;
+    }, [ethersLib]);
+
+    const connectWallet = useCallback(async () => {
+        let walletProvider = window.ethereum;
+        if (!walletProvider && window.BinanceChain) walletProvider = window.BinanceChain;
+        if (!walletProvider) return alert("ไม่พบกระเป๋าเงิน! กรุณาติดตั้ง MetaMask หรือ Binance Wallet");
+        try {
+            const lib = await loadEthers();
+            const prov = new lib.providers.Web3Provider(walletProvider);
+            if (walletProvider.request) await walletProvider.request({ method: 'eth_requestAccounts' });
+            else await prov.send("eth_requestAccounts", []);
+            const sign = prov.getSigner();
+            const addr = await sign.getAddress();
+            const raw = await prov.getBalance(addr);
+            const network = await prov.getNetwork();
+            setProvider(prov); setSigner(sign); setAccount(addr);
+            setBalance(parseFloat(lib.utils.formatEther(raw)).toFixed(4));
+            setChainId(network.chainId);
+            setIsOwner(ADMIN_WALLETS.some(a => a.toLowerCase() === addr.toLowerCase()));
+            const chainName = CHAINS[network.chainId]?.name || `Chain ${network.chainId}`;
+            showStatus(`เชื่อมต่อสำเร็จ! ✅ (${chainName})`, "success");
+        } catch (err) {
+            showStatus("เชื่อมต่อล้มเหลว: " + (err.message || err), "error");
+        }
+    }, [loadEthers, showStatus]);
 
     useEffect(() => {
-        if (!window.ethereum || !ethersLib) return;
+        if (!window.ethereum) return;
         window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
             if (accounts.length > 0) connectWallet();
         });
-        window.ethereum.on('accountsChanged', (accounts) => {
+        const onAccountsChanged = (accounts) => {
             if (accounts.length > 0) { setAccount(accounts[0]); window.location.reload(); }
             else { setAccount(""); setSigner(null); setBalance("0.0000"); setChainId(null); }
-        });
-        window.ethereum.on('chainChanged', () => window.location.reload());
-    }, [ethersLib]);
+        };
+        const onChainChanged = () => window.location.reload();
+        window.ethereum.on('accountsChanged', onAccountsChanged);
+        window.ethereum.on('chainChanged', onChainChanged);
+        return () => {
+            window.ethereum.removeListener?.('accountsChanged', onAccountsChanged);
+            window.ethereum.removeListener?.('chainChanged', onChainChanged);
+        };
+    }, [connectWallet]);
 
     useEffect(() => {
         if (!account || !provider || !ethersLib) return;
@@ -42,32 +69,6 @@ export function useWallet(showStatus) {
         }, 15000);
         return () => clearInterval(interval);
     }, [account, provider, ethersLib]);
-
-    const connectWallet = async () => {
-        let walletProvider = window.ethereum;
-        if (!walletProvider && window.BinanceChain) walletProvider = window.BinanceChain;
-        if (!walletProvider) return alert("ไม่พบกระเป๋าเงิน! กรุณาติดตั้ง MetaMask หรือ Binance Wallet");
-        if (!ethersLib) return showStatus("กำลังโหลดระบบ...", "info");
-        try {
-            const prov = new ethersLib.providers.Web3Provider(walletProvider);
-            if (walletProvider.request) await walletProvider.request({ method: 'eth_requestAccounts' });
-            else await prov.send("eth_requestAccounts", []);
-            const sign = prov.getSigner();
-            const addr = await sign.getAddress();
-            const raw = await prov.getBalance(addr);
-            const network = await prov.getNetwork();
-            setProvider(prov);
-            setSigner(sign);
-            setAccount(addr);
-            setBalance(parseFloat(ethersLib.utils.formatEther(raw)).toFixed(4));
-            setChainId(network.chainId);
-            setIsOwner(ADMIN_WALLETS.some(a => a.toLowerCase() === addr.toLowerCase()));
-            const chainName = CHAINS[network.chainId]?.name || `Chain ${network.chainId}`;
-            showStatus(`เชื่อมต่อสำเร็จ! ✅ (${chainName})`, "success");
-        } catch (err) {
-            showStatus("เชื่อมต่อล้มเหลว: " + (err.message || err), "error");
-        }
-    };
 
     const switchChain = async (targetChainId) => {
         if (!window.ethereum) return;
