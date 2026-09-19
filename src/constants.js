@@ -3,7 +3,7 @@
 // false = Production — เปิดการโอนเงินจริง (เปลี่ยนเฉพาะเมื่อพร้อม Launch จริง)
 export const SANDBOX_MODE = true;
 
-export const SHOP_WALLET_ADDRESS = "0xCEEcd5Fe0034F397B5A66a7BcD754B5B08a6cd70";
+export const SHOP_WALLET_ADDRESS = "0x00F0903777B197CF673901b3cc768EA902fb601F";
 
 // ─── EmailJS — ระบบแจ้งเตือนแอดมินทางอีเมล ────────────────────────────────
 // ตั้งค่าที่ https://www.emailjs.com (Free: 200 emails/month)
