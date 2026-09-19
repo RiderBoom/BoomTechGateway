@@ -70,6 +70,7 @@ const App = () => {
     const [statusType, setStatusType] = useState("info");
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [legalModal, setLegalModal] = useState(null); // 'privacy' | 'terms' | null
+    const [hasFirebaseAdminClaim, setHasFirebaseAdminClaim] = useState(false);
 
     const showStatus = useCallback((msg, type = "info") => {
         const safe = typeof msg === 'object' ? JSON.stringify(msg) : String(msg);
@@ -90,7 +91,8 @@ const App = () => {
 
     // รวม admin จากทั้ง wallet address และ Firebase UID
     const isFirebaseAdmin = !!firebaseUser && ADMIN_FIREBASE_UIDS.includes(firebaseUser.uid);
-    const isAdmin = isOwner || isFirebaseAdmin;
+    const hasFirebaseAdminAccess = isFirebaseAdmin || hasFirebaseAdminClaim;
+    const isAdmin = isOwner || hasFirebaseAdminAccess;
     const market = useMarket(activeTab);
     const { pet, gameScore, handleAction, handleFaucet } = usePet(account, showStatus);
     useAccessLog(appId, account, activeTab, cookieConsent.consent.analytics);
@@ -101,6 +103,23 @@ const App = () => {
     //
     // Fallback: ถ้า API ล้มเหลว หรือ user reject MetaMask → แสดง login modal แทน
     const adminClaimAttempted = useRef(false);
+
+    // Custom claims are issued server-side and live in the Firebase ID token.
+    // Read the current token so the Admin panel reflects the real Firestore access state.
+    useEffect(() => {
+        let active = true;
+        if (!firebaseUser) {
+            setHasFirebaseAdminClaim(false);
+            return () => { active = false; };
+        }
+
+        hasAdminClaim(firebaseUser)
+            .then(hasClaim => { if (active) setHasFirebaseAdminClaim(hasClaim); })
+            .catch(() => { if (active) setHasFirebaseAdminClaim(false); });
+
+        return () => { active = false; };
+    }, [firebaseUser]);
+
     useEffect(() => {
         if (!isOwner || !firebaseUser || !provider) return;
 
@@ -117,7 +136,10 @@ const App = () => {
             showStatus('Wallet Admin พบแล้ว — กรุณายืนยันใน MetaMask...', 'info');
 
             requestAdminClaim(provider, account, firebaseUser)
-                .then(() => showStatus('Admin พร้อมใช้งาน ✅ — Firestore สิทธิ์เต็ม', 'success'))
+                .then(() => {
+                    setHasFirebaseAdminClaim(true);
+                    showStatus('Admin พร้อมใช้งาน ✅ — Firestore สิทธิ์เต็ม', 'success');
+                })
                 .catch(err => {
                     adminClaimAttempted.current = false; // อนุญาตให้ลองใหม่
                     if (err.message?.includes('user rejected')) {
@@ -165,7 +187,7 @@ const App = () => {
                             {activeTab === 'news'      && <NewsTab />}
                             {activeTab === 'community' && <CommunityTab {...tabProps} dbError={dbError} chatMessages={chatMessages} isOwner={isAdmin} bannedUsers={bannedUsers} />}
                             {activeTab === 'donate'    && <DonateTab {...tabProps} />}
-                            {activeTab === 'admin'     && <AdminTab shopOrders={shopOrders} transactions={transactions} account={account} db={db} appId={appId} feeSettings={feeSettings} bannedUsers={bannedUsers} tabsConfig={tabsConfig} paymentConfig={paymentConfig} reports={reports} chatMessages={chatMessages} takedownLog={takedownLog} firebaseUser={firebaseUser} isFirebaseAdmin={isFirebaseAdmin} onLoginClick={() => setShowAuthModal(true)} />}
+                            {activeTab === 'admin'     && <AdminTab shopOrders={shopOrders} transactions={transactions} account={account} db={db} appId={appId} feeSettings={feeSettings} bannedUsers={bannedUsers} tabsConfig={tabsConfig} paymentConfig={paymentConfig} reports={reports} chatMessages={chatMessages} takedownLog={takedownLog} firebaseUser={firebaseUser} isFirebaseAdmin={hasFirebaseAdminAccess} onLoginClick={() => setShowAuthModal(true)} />}
                         </Suspense>
                         </ErrorBoundary>
 
