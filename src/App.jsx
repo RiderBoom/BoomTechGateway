@@ -27,7 +27,7 @@ import {
   signOut,                
   updateProfile           
 } from 'firebase/auth'; 
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, where, doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const App = () => {
@@ -99,10 +99,11 @@ const App = () => {
   // ✅ TRANSLATIONS OBJECT
   const TRANSLATIONS = {
       EN: {
-        tabs: { wallet: "Wallet", market: "Market", game: "BoomPet", shop: "Shop", news: "News", community: "Community", donate: "Donate", admin: "Admin" },
+        tabs: { wallet: "Wallet", market: "Market", prediction: "Prediction", game: "BoomPet", shop: "Shop", news: "News", community: "Community", donate: "Donate", admin: "Admin" },
         header: { connect: "Connect Wallet", login: "Login", online: "Online", welcome: "Welcome Back", createAcc: "Create Account" },
         wallet: { send: "Send", receive: "Receive", native: "Native", token: "Token", tokenAddr: "Token Address", recipient: "Recipient Address", amount: "Amount", confirm: "Confirm Transfer", recent: "Recent Activity", noTx: "No transactions yet", yourAddr: "Your Wallet Address", selectChain: "Select Chain Network" },
         market: { search: "Search Symbol...", refresh: "Refresh", price: "Price", mcap: "Market Cap", vol: "Volume 24h", fear: "Fear & Greed", ath: "All-Time High", atl: "All-Time Low", supply: "Circulating Supply", fdv: "FDV (Valuation)", binanceTitle: "Trade on Binance", binanceDesc: "Save 20% on fees with referral ID:" },
+        prediction: { title: "Binance Prediction Mode", subtitle: "Predict NEXT round price (Bull / Bear) powered by Binance Price Feeds", bull: "Bull (UP)", bear: "Bear (DOWN)", enterBull: "Enter Bull", enterBear: "Enter Bear", livePrice: "Live Price", lockPrice: "Lock Price", round: "Round", timeLeft: "Time Left", userBets: "Your Positions", history: "Round History", guideTitle: "How to Integrate with Binance & Prediction Mode", enterAmount: "Amount (USDT)", winPayout: "Estimated Payout" },
         game: { title: "BOOM PET", subtitle: "Raise your digital companion", feed: "Feed", train: "Train", sleep: "Sleep", wake: "Wake" },
         shop: { title: "Marketplace", subtitle: "Exclusive Gear & Digital Assets", seller: "Seller Dashboard", loadDemo: "Load Demo Data", exit: "Exit Mode", manage: "Manage Products", edit: "Edit Item", add: "Add New Item", name: "Product Name", cat: "Category", img: "Image URL", cancel: "Cancel", update: "Update Item", create: "Create Item", inventory: "Inventory", recentOrders: "Recent Orders", buyer: "Buyer", paid: "Paid", pending: "Pending Slip", rejected: "Rejected", viewSlip: "View Slip", approve: "Approve", reject: "Reject", shipping: "Shipping", cart: "Your Cart", emptyCart: "Your cart is empty", shipTo: "Shipping To", payMethod: "Payment Method", total: "Total Estimate", checkout: "Complete Purchase", processing: "Processing...", usdtAddr: "USDT Contract Address" },
         news: { title: "Official News", loading: "Loading feeds...", read: "Read More", updated: "Last updated", postNews: "Post News", newsTitle: "Title", newsDesc: "Description/Body", newsLink: "Source Link", newsSource: "Source Name" },
@@ -112,10 +113,11 @@ const App = () => {
         auth: { displayName: "Display Name", email: "Email", password: "Password", signIn: "Sign In", signUp: "Sign Up", newHere: "New here?", haveAcc: "Already have an account?" }
       },
       TH: {
-        tabs: { wallet: "กระเป๋าเงิน", market: "ตลาด", game: "สัตว์เลี้ยง", shop: "ร้านค้า", news: "ข่าวสาร", community: "ชุมชน", donate: "บริจาค", admin: "ผู้ดูแล" },
+        tabs: { wallet: "กระเป๋าเงิน", market: "ตลาด", prediction: "ทายราคา", game: "สัตว์เลี้ยง", shop: "ร้านค้า", news: "ข่าวสาร", community: "ชุมชน", donate: "บริจาค", admin: "ผู้ดูแล" },
         header: { connect: "เชื่อมต่อกระเป๋า", login: "เข้าสู่ระบบ", online: "ออนไลน์", welcome: "ยินดีต้อนรับกลับ", createAcc: "สร้างบัญชีใหม่" },
         wallet: { send: "โอนเงิน", receive: "รับเงิน", native: "เหรียญหลัก", token: "โทเคน", tokenAddr: "ที่อยู่โทเคน", recipient: "ที่อยู่ผู้รับ", amount: "จำนวน", confirm: "ยืนยันการโอน", recent: "ประวัติล่าสุด", noTx: "ยังไม่มีรายการ", yourAddr: "ที่อยู่กระเป๋าของคุณ", selectChain: "เลือกเครือข่าย" },
         market: { search: "ค้นหาเหรียญ...", refresh: "รีเฟรช", price: "ราคา", mcap: "มูลค่าตลาด", vol: "ปริมาณ 24ชม.", fear: "ดัชนีกลัว/โลภ", ath: "ราคาสูงสุด", atl: "ราคาต่ำสุด", supply: "อุปทานหมุนเวียน", fdv: "มูลค่าประเมิน (FDV)", binanceTitle: "เทรดบน Binance", binanceDesc: "รับส่วนลดค่าธรรมเนียม 20% ด้วยรหัส:" },
+        prediction: { title: "Binance Prediction Mode", subtitle: "คาดการณ์ทิศทางราคาเหรียญในรอบถัดไป (ขึ้น/ลง) อ้างอิงราคาจริงจาก Binance", bull: "ราคาขึ้น (Bull)", bear: "ราคาลง (Bear)", enterBull: "แทงขึ้น (Bull)", enterBear: "แทงลง (Bear)", livePrice: "ราคาปัจจุบัน", lockPrice: "ราคาตอนล็อก", round: "รอบที่", timeLeft: "เวลาที่เหลือ", userBets: "ประวัติการทายของคุณ", history: "ประวัติรอบย้อนหลัง", guideTitle: "แนวทางการพัฒนาและเชื่อมต่อกับ Binance / Smart Contract", enterAmount: "จำนวนเงิน (USDT)", winPayout: "ผลตอบแทนประเมิน" },
         game: { title: "BOOM PET", subtitle: "เลี้ยงมอนสเตอร์ดิจิทัลของคุณ", feed: "ให้อาหาร", train: "ฝึกฝน", sleep: "เข้านอน", wake: "ตื่นนอน" },
         shop: { title: "ตลาดซื้อขาย", subtitle: "อุปกรณ์และสินทรัพย์ดิจิทัล", seller: "แผงควบคุมผู้ขาย", loadDemo: "โหลดข้อมูลตัวอย่าง", exit: "ออก", manage: "จัดการสินค้า", edit: "แก้ไขสินค้า", add: "เพิ่มสินค้าใหม่", name: "ชื่อสินค้า", cat: "หมวดหมู่", img: "ลิ้งค์รูปภาพ", cancel: "ยกเลิก", update: "อัปเดต", create: "สร้าง", inventory: "คลังสินค้า", recentOrders: "คำสั่งซื้อล่าสุด", buyer: "ผู้ซื้อ", paid: "จ่ายแล้ว", pending: "รอตรวจสอบสลิป", rejected: "ปฏิเสธ", viewSlip: "ดูสลิป", approve: "อนุมัติ", reject: "ปฏิเสธ", shipping: "ที่อยู่จัดส่ง", cart: "ตะกร้าสินค้า", emptyCart: "ตะกร้าว่างเปล่า", shipTo: "ที่อยู่จัดส่ง", payMethod: "วิธีการชำระเงิน", total: "ยอดรวมโดยประมาณ", checkout: "ยืนยันการสั่งซื้อ", processing: "กำลังดำเนินการ...", usdtAddr: "ที่อยู่สัญญา USDT" },
         news: { title: "ข่าวสารทางการ", loading: "ยังไม่มีข่าวสาร", read: "อ่านต่อ", postNews: "โพสต์ข่าว", newsTitle: "หัวข้อข่าว", newsDesc: "เนื้อหาข่าว", newsLink: "ลิงก์ที่มา", newsSource: "ชื่อสำนักข่าว" },
@@ -127,11 +129,11 @@ const App = () => {
   };
 
   // --- Firebase Setup ---
-  const [firebaseApp, setFirebaseApp] = useState(null);
+  const [_firebaseApp, setFirebaseApp] = useState(null);
   const [db, setDb] = useState(null);
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [authInstance, setAuthInstance] = useState(null);
-  const [dbError, setDbError] = useState(null);
+  const [_dbError, setDbError] = useState(null);
   const [storage, setStorage] = useState(null);
   
   // --- Auth UI State ---
@@ -148,7 +150,7 @@ const App = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [appReviews, setAppReviews] = useState([]); // Kept variable but unused in view as requested
+  const [_appReviews, _setAppReviews] = useState([]);
   
   const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
   
@@ -157,9 +159,9 @@ const App = () => {
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [account, setAccount] = useState("");
-  const [balance, setBalance] = useState("0.0000"); 
-  const [tokenBalance, setTokenBalance] = useState("0.00");
-  const [contractAddress, setContractAddress] = useState(DEFAULT_CONTRACT_ADDRESS);
+  const [_balance, setBalance] = useState("0.0000");
+  const [_tokenBalance, _setTokenBalance] = useState("0.00");
+  const [contractAddress, _setContractAddress] = useState(DEFAULT_CONTRACT_ADDRESS);
   const [activeTab, setActiveTab] = useState("shop"); 
   
   // ✅ New: Language State
@@ -169,7 +171,7 @@ const App = () => {
   // ✅ New: Network State
   const [chainId, setChainId] = useState(null);
   const [nativeTicker, setNativeTicker] = useState("ETH");
-  const [networkName, setNetworkName] = useState("Unknown Network");
+  const [_networkName, setNetworkName] = useState("Unknown Network");
 
   // Wallet Tab State
   const [walletMode, setWalletMode] = useState("transfer"); 
@@ -186,7 +188,7 @@ const App = () => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [shopCategory, setShopCategory] = useState("All");
-  const [paymentMethod, setPaymentMethod] = useState("PROMPTPAY"); 
+  const [paymentMethod, _setPaymentMethod] = useState("PROMPTPAY");
   const [usdtAddress, setUsdtAddress] = useState(""); 
   const [isSellerMode, setIsSellerMode] = useState(false); 
   const [shopOrders, setShopOrders] = useState([]); 
@@ -216,8 +218,8 @@ const App = () => {
       isSleeping: false,
       lastTick: Date.now()
   });
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [isSaving, setIsSaving] = useState(false);
+  const [_leaderboard, _setLeaderboard] = useState([]);
+  const [_isSaving, setIsSaving] = useState(false);
 
   const PET_STAGES = {
       egg: { index: 0, name: "DigiEgg", icon: Egg, color: "text-slate-400", next: "baby", reqExp: 10 },
@@ -228,7 +230,7 @@ const App = () => {
   };
 
   // --- AI Chatbot State ---
-  const [isAiChatOpen, setIsAiChatOpen] = useState(false); 
+  const [isAiChatOpen, _setIsAiChatOpen] = useState(false);
   const [aiMessages, setAiMessages] = useState([
     { id: 1, sender: 'bot', text: 'สวัสดีครับ! ผมคือ BoomBot AI (Powered by Gemini) 🤖 ผู้ช่วยอัจฉริยะของคุณ ถามเรื่องราคาเหรียญ หรือความรู้ Crypto ได้เลยครับ!' }
   ]);
@@ -251,7 +253,7 @@ const App = () => {
   const [coinSymbol, setCoinSymbol] = useState("ETH"); 
   const [isCustomSymbol, setIsCustomSymbol] = useState(false);
   const [coinInput, setCoinInput] = useState("");
-  const [coinImage, setCoinImage] = useState("https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880");
+  const [_coinImage, setCoinImage] = useState("https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880");
   const [currentPrice, setCurrentPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
   const [marketStats, setMarketStats] = useState({ 
@@ -259,12 +261,29 @@ const App = () => {
   });
   const [fearGreed, setFearGreed] = useState({ value: 0, status: "Neutral" });
 
+  // --- Binance Prediction Mode State ---
+  const [predSymbol, setPredSymbol] = useState("BTCUSDT");
+  const [predPrice, setPredPrice] = useState(0);
+  const [predPrevPrice, setPredPrevPrice] = useState(0);
+  const [predRound, setPredRound] = useState(1048);
+  const [predTimeLeft, setPredTimeLeft] = useState(120); // 2 min rounds
+  const [predLockPrice, setPredLockPrice] = useState(0);
+  const [predStatus, setPredStatus] = useState("LIVE"); // 'LIVE' | 'LOCKED'
+  const [predBetAmount, setPredBetAmount] = useState("10");
+  const [predPoints, setPredPoints] = useState(1000);
+  const [predUserBets, setPredUserBets] = useState([]);
+  const [predHistory, setPredHistory] = useState([
+      { round: 1047, symbol: "BTCUSDT", lockPrice: 94120.50, closePrice: 94350.20, result: "BULL", bullPool: 4500, bearPool: 3200 },
+      { round: 1046, symbol: "BTCUSDT", lockPrice: 94250.00, closePrice: 94110.80, result: "BEAR", bullPool: 2800, bearPool: 3900 },
+      { round: 1045, symbol: "BTCUSDT", lockPrice: 93980.10, closePrice: 94250.00, result: "BULL", bullPool: 5100, bearPool: 4800 }
+  ]);
+
   // ✅ New: News Data State
   const [adminNews, setAdminNews] = useState([]); // Manual news
-  const [newsData, setNewsData] = useState([]); // API news
+  const [_newsData, _setNewsData] = useState([]); // API news
   const [showNewsForm, setShowNewsForm] = useState(false);
-  const [isNewsLoading, setIsNewsLoading] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const [_isNewsLoading, _setIsNewsLoading] = useState(false);
+  const [_lastUpdated, _setLastUpdated] = useState(null);
   const [newNews, setNewNews] = useState({ title: "", body: "", imageurl: "", url: "", source: "Admin" });
 
   // Admin
@@ -277,7 +296,7 @@ const App = () => {
   const glassInput = "bg-slate-950/60 border border-white/5 focus:border-indigo-500/50 focus:bg-slate-900/80 outline-none transition-all text-slate-200 placeholder-slate-500 shadow-inner";
   const headingFont = "font-['Sora'] tracking-tight";
   const bodyFont = "font-['Outfit']";
-  const accentGradient = "bg-gradient-to-r from-violet-500 to-fuchsia-500";
+  const _accentGradient = "bg-gradient-to-r from-violet-500 to-fuchsia-500";
   const textGradient = "bg-gradient-to-r from-cyan-300 via-indigo-300 to-fuchsia-300 bg-clip-text text-transparent";
 
   const contractABI = [
@@ -405,7 +424,7 @@ const App = () => {
     return true;
   };
 
-  const handleGoogleLogin = async () => {
+  const _handleGoogleLogin = async () => {
       if (!authInstance) return;
       setAuthLoading(true);
       try {
@@ -610,7 +629,7 @@ const App = () => {
         else { setAccount(""); setSigner(null); setBalance("0.0000"); }
       });
       // ✅ Handle Chain Changed
-      window.ethereum.on('chainChanged', (newChainId) => {
+      window.ethereum.on('chainChanged', () => {
           window.location.reload(); 
       });
     }
@@ -708,7 +727,7 @@ const App = () => {
                           method: 'wallet_addEthereumChain',
                           params: [network.params],
                       });
-                  } catch (addError) {
+                  } catch {
                       showStatus("ไม่สามารถเพิ่มเครือข่ายได้", "error");
                   }
               } else {
@@ -809,7 +828,7 @@ const App = () => {
   const existingCategories = ["All", ...new Set(products.map(p => p.category))];
 
   // ✅ New: Handle Save (Create/Update) News (Admin)
-  const handleSaveNews = async () => {
+  const _handleSaveNews = async () => {
       // 🔒 GUARD: Admin Only
       if (!isOwner) return showStatus("คุณไม่มีสิทธิ์ (Admin Only)", "error");
 
@@ -1148,12 +1167,127 @@ const App = () => {
               });
           }
       }
-    } catch (e) { console.error("Price data error", e); }
+    } catch { /* ignore fetch error */ }
     finally { setTimeout(() => setIsMarketLoading(false), 500); } 
   };
 
   const fetchGlobalData = async () => {
-      try { const fgRes = await fetch("https://api.alternative.me/fng/?limit=1"); const fgData = await fgRes.json(); if (fgData.data && fgData.data.length > 0) setFearGreed({ value: parseInt(fgData.data[0].value), status: fgData.data[0].value_classification }); } catch (e) {}
+      try { const fgRes = await fetch("https://api.alternative.me/fng/?limit=1"); const fgData = await fgRes.json(); if (fgData.data && fgData.data.length > 0) setFearGreed({ value: parseInt(fgData.data[0].value), status: fgData.data[0].value_classification }); } catch { /* ignore fetch error */ }
+  };
+
+  // --- Binance Price Feed & Prediction Engine ---
+  const fetchBinancePredPrice = async (symbol) => {
+      try {
+          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+          const data = await res.json();
+          if (data && data.price) {
+              const numPrice = parseFloat(data.price);
+              setPredPrice(prev => {
+                  setPredPrevPrice(prev || numPrice);
+                  return numPrice;
+              });
+              if (predLockPrice === 0) setPredLockPrice(numPrice);
+          }
+      } catch (e) {
+          console.error("Binance ticker error", e);
+      }
+  };
+
+  useEffect(() => {
+      if (activeTab !== 'prediction') return;
+
+      fetchBinancePredPrice(predSymbol);
+      const priceInterval = setInterval(() => fetchBinancePredPrice(predSymbol), 3000);
+
+      const timerInterval = setInterval(() => {
+          setPredTimeLeft(prev => {
+              if (prev <= 1) {
+                  // Round transition logic
+                  setPredPrice(latestPrice => {
+                      setPredLockPrice(currentLock => {
+                          const result = latestPrice >= currentLock ? "BULL" : "BEAR";
+                          setPredRound(r => {
+                              const completedRound = r;
+                              // Save to history
+                              setPredHistory(h => [
+                                  {
+                                      round: completedRound,
+                                      symbol: predSymbol,
+                                      lockPrice: currentLock,
+                                      closePrice: latestPrice,
+                                      result: result,
+                                      bullPool: Math.floor(Math.random() * 3000) + 2000,
+                                      bearPool: Math.floor(Math.random() * 3000) + 2000
+                                  },
+                                  ...h
+                              ]);
+
+                              // Evaluate user bets
+                              setPredUserBets(bets => {
+                                  let payoutSum = 0;
+                                  const updatedBets = bets.map(b => {
+                                      if (b.round === completedRound && b.status === "PENDING") {
+                                          const won = b.position === result;
+                                          const payout = won ? b.amount * 1.95 : 0;
+                                          payoutSum += payout;
+                                          return { ...b, status: won ? "WON" : "LOST", payout, closePrice: latestPrice };
+                                      }
+                                      return b;
+                                  });
+
+                                  if (payoutSum > 0) {
+                                      setPredPoints(pts => pts + payoutSum);
+                                      showStatus(`🎉 ชนะการคาดการณ์รอบ #${completedRound}! รับ ${payoutSum.toFixed(2)} Points`, "success");
+                                  }
+                                  return updatedBets;
+                              });
+
+                              return r + 1;
+                          });
+
+                          return latestPrice; // New round lock price is current price
+                      });
+                      return latestPrice;
+                  });
+
+                  setPredStatus("LIVE");
+                  return 120; // reset 2 min timer
+              }
+
+              if (prev === 30) {
+                  setPredStatus("LOCKED");
+              }
+
+              return prev - 1;
+          });
+      }, 1000);
+
+      return () => {
+          clearInterval(priceInterval);
+          clearInterval(timerInterval);
+      };
+  }, [activeTab, predSymbol]);
+
+  const handlePlacePrediction = (position) => {
+      const amt = parseFloat(predBetAmount);
+      if (isNaN(amt) || amt <= 0) return showStatus("กรุณาระบุจำนวนเงิน / Points ให้ถูกต้อง", "error");
+      if (predPoints < amt) return showStatus("ยอดคงเหลือ Points ไม่เพียงพอ", "error");
+      if (predStatus === "LOCKED" || predTimeLeft <= 15) return showStatus("รอบนี้ปิดรับการคาดการณ์แล้ว รอรอบถัดไป", "error");
+
+      setPredPoints(pts => pts - amt);
+      const newBet = {
+          id: Date.now(),
+          round: predRound,
+          symbol: predSymbol,
+          position: position,
+          amount: amt,
+          lockPrice: predLockPrice || predPrice,
+          timestamp: Date.now(),
+          status: "PENDING"
+      };
+
+      setPredUserBets(prev => [newBet, ...prev]);
+      showStatus(`แทง ${position} จำนวน ${amt} Points สำเร็จ! (รอบ #${predRound})`, "success");
   };
 
   // ✅ Auto Fetch Updates
@@ -1209,7 +1343,7 @@ const App = () => {
       try {
           await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'news_posts', id));
           showStatus("ลบข่าวแล้ว", "info");
-      } catch(e) {
+      } catch {
           showStatus("ลบไม่สำเร็จ", "error");
       }
   };
@@ -1253,8 +1387,7 @@ const App = () => {
             setCoinInput(""); 
             showStatus(`ไม่พบใน CoinGecko - ค้นหาบน TradingView แทน`, "info"); 
         }
-    } catch (err) { 
-        console.error("Search error", err);
+    } catch {
         setCoinSymbol(coinInput.toUpperCase()); 
         setIsCustomSymbol(true); 
         setCoinInput(""); 
@@ -1284,7 +1417,7 @@ const App = () => {
     return <div id={containerId} ref={containerRef} className="w-full h-[600px] rounded-xl overflow-hidden border border-white/10 relative shadow-2xl" />;
   };
 
-  const handleAiSendMessage = async (e) => {
+  const _handleAiSendMessage = async (e) => {
     e.preventDefault();
     if (!aiInput.trim()) return;
     const userMsg = { id: Date.now(), sender: 'user', text: aiInput };
@@ -1326,7 +1459,7 @@ const App = () => {
         }
         await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'community_chat'), { text: chatInput, image: imageUrl, sender: senderName, isWallet: !!account, avatar: avatar, timestamp: Date.now() });
         setChatInput(""); setSelectedImage(null); setSelectedImageFile(null);
-    } catch (error) { showStatus("ส่งข้อความไม่สำเร็จ", "error"); }
+    } catch { showStatus("ส่งข้อความไม่สำเร็จ", "error"); }
   };
 
   const copyToClipboard = (text) => { navigator.clipboard.writeText(text); showStatus("คัดลอกแล้ว", "success"); };
@@ -1523,6 +1656,7 @@ const App = () => {
                         {[
                             { id: 'wallet', icon: Wallet, label: t.tabs.wallet }, 
                             { id: 'market', icon: BarChart2, label: t.tabs.market }, 
+                            { id: 'prediction', icon: TrendingUp, label: t.tabs.prediction },
                             { id: 'game', icon: Gamepad2, label: t.tabs.game }, 
                             { id: 'shop', icon: ShoppingBag, label: t.tabs.shop }, 
                             { id: 'news', icon: Newspaper, label: t.tabs.news }, 
@@ -1734,6 +1868,279 @@ const App = () => {
                         </div>
                     )}
 
+                    {/* Prediction Tab (Binance Prediction Mode) */}
+                    {activeTab === 'prediction' && (
+                        <div className="space-y-8 animate-in fade-in duration-500">
+                            {/* Header Banner */}
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-indigo-500/10 border border-amber-500/20 gap-4">
+                                <div>
+                                    <h2 className={`text-3xl font-extrabold text-white flex items-center gap-3 ${headingFont}`}>
+                                        <TrendingUp className="w-8 h-8 text-yellow-400" />
+                                        {t.prediction.title}
+                                    </h2>
+                                    <p className="text-slate-400 text-sm mt-1">{t.prediction.subtitle}</p>
+                                </div>
+                                <div className="flex items-center gap-3 bg-slate-950/80 px-5 py-3 rounded-2xl border border-white/10">
+                                    <Coins className="w-5 h-5 text-yellow-400" />
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold">Prediction Points</div>
+                                        <div className="text-lg font-mono font-bold text-emerald-400">{predPoints.toFixed(2)} PTS</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Symbol Selector & Live Ticker Bar */}
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                <div className="md:col-span-4 flex gap-2">
+                                    {["BTCUSDT", "ETHUSDT", "BNBUSDT"].map(sym => (
+                                        <button
+                                            key={sym}
+                                            onClick={() => { setPredSymbol(sym); setPredLockPrice(0); }}
+                                            className={`flex-1 py-3 rounded-2xl font-bold text-xs border transition-all ${predSymbol === sym ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 shadow-lg' : 'bg-slate-950/50 border-white/5 text-slate-400 hover:text-white'}`}
+                                        >
+                                            {sym}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="md:col-span-8 p-4 rounded-2xl bg-slate-950/60 border border-white/10 flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase font-bold">{t.prediction.livePrice} ({predSymbol})</div>
+                                            <div className={`text-2xl font-bold font-mono ${predPrice >= predPrevPrice ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                ${predPrice ? predPrice.toLocaleString(undefined, { minimumFractionDigits: 2 }) : 'Loading...'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold">{t.prediction.lockPrice}</div>
+                                        <div className="text-xl font-bold font-mono text-slate-200">
+                                            ${predLockPrice ? predLockPrice.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '-'}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold">{t.prediction.round}</div>
+                                        <div className="text-xl font-bold text-yellow-400 font-mono">#{predRound}</div>
+                                    </div>
+
+                                    <div className="text-right">
+                                        <div className="text-[10px] text-slate-500 uppercase font-bold">{t.prediction.timeLeft}</div>
+                                        <div className={`text-2xl font-mono font-bold ${predTimeLeft <= 30 ? 'text-red-400 animate-pulse' : 'text-cyan-400'}`}>
+                                            {Math.floor(predTimeLeft / 60)}:{(predTimeLeft % 60).toString().padStart(2, '0')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Main Prediction Round Cards */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* BULL (UP) CARD */}
+                                <div className="p-6 rounded-3xl bg-emerald-950/20 border border-emerald-500/30 flex flex-col justify-between space-y-6 hover:border-emerald-500/60 transition-all shadow-xl">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2 text-emerald-400 font-bold text-lg">
+                                            <TrendingUp className="w-6 h-6" />
+                                            {t.prediction.bull}
+                                        </div>
+                                        <span className="text-xs font-mono bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30">
+                                            Payout ~1.95x
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-slate-400">
+                                            คาดว่าราคาปิดรอบ #{predRound} จะ <strong className="text-emerald-400">สูงกว่าหรือเท่ากับ</strong> ราคาเมื่อเริ่มล็อก (${predLockPrice || predPrice})
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={() => handlePlacePrediction("BULL")}
+                                        disabled={predStatus === "LOCKED" || predTimeLeft <= 15}
+                                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-bold text-lg shadow-lg shadow-emerald-900/30 active:scale-98 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <TrendingUp className="w-5 h-5" />
+                                        {t.prediction.enterBull}
+                                    </button>
+                                </div>
+
+                                {/* CENTER LIVE MONITOR CARD */}
+                                <div className="p-6 rounded-3xl bg-slate-950/80 border border-white/10 flex flex-col justify-between items-center text-center space-y-6 shadow-2xl relative overflow-hidden">
+                                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-500"></div>
+
+                                    <div className="space-y-1">
+                                        <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${predStatus === 'LOCKED' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                                            {predStatus === 'LOCKED' ? '🔒 ROUND LOCKED' : '🟢 LIVE FOR BETS'}
+                                        </span>
+                                        <h3 className="text-2xl font-extrabold text-white mt-3 font-mono">#{predRound}</h3>
+                                    </div>
+
+                                    <div className="my-2">
+                                        <div className="text-xs text-slate-500 mb-1">ส่วนต่างราคาปัจจุบัน vs ล็อก</div>
+                                        {predLockPrice ? (
+                                            <div className={`text-3xl font-mono font-bold ${predPrice >= predLockPrice ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                {predPrice >= predLockPrice ? '+' : ''}{(predPrice - predLockPrice).toFixed(2)} USD
+                                            </div>
+                                        ) : (
+                                            <div className="text-slate-500 font-mono text-xl">-</div>
+                                        )}
+                                    </div>
+
+                                    <div className="w-full space-y-2">
+                                        <label className="text-xs text-slate-400 font-bold block text-left ml-1">{t.prediction.enterAmount}</label>
+                                        <div className="relative">
+                                            <input
+                                                type="number"
+                                                value={predBetAmount}
+                                                onChange={(e) => setPredBetAmount(e.target.value)}
+                                                className={`w-full px-4 py-3 rounded-xl ${glassInput} font-mono font-bold text-center text-lg`}
+                                                placeholder="10"
+                                            />
+                                            <span className="absolute right-4 top-3.5 text-xs text-yellow-400 font-bold">PTS</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* BEAR (DOWN) CARD */}
+                                <div className="p-6 rounded-3xl bg-red-950/20 border border-red-500/30 flex flex-col justify-between space-y-6 hover:border-red-500/60 transition-all shadow-xl">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2 text-red-400 font-bold text-lg">
+                                            <TrendingDown className="w-6 h-6" />
+                                            {t.prediction.bear}
+                                        </div>
+                                        <span className="text-xs font-mono bg-red-500/20 text-red-300 px-3 py-1 rounded-full border border-red-500/30">
+                                            Payout ~1.95x
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-slate-400">
+                                            คาดว่าราคาปิดรอบ #{predRound} จะ <strong className="text-red-400">ต่ำกว่า</strong> ราคาเมื่อเริ่มล็อก (${predLockPrice || predPrice})
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={() => handlePlacePrediction("BEAR")}
+                                        disabled={predStatus === "LOCKED" || predTimeLeft <= 15}
+                                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:opacity-50 text-white font-bold text-lg shadow-lg shadow-red-900/30 active:scale-98 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <TrendingDown className="w-5 h-5" />
+                                        {t.prediction.enterBear}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* User Positions & History Section */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Your Positions */}
+                                <div className="p-6 rounded-3xl bg-slate-950/50 border border-white/10 space-y-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3">
+                                        <History className="w-5 h-5 text-indigo-400" />
+                                        {t.prediction.userBets}
+                                    </h3>
+                                    <div className="max-h-64 overflow-y-auto space-y-3 custom-scrollbar pr-2">
+                                        {predUserBets.length === 0 ? (
+                                            <p className="text-slate-500 text-sm text-center py-8">ยังไม่มีการทายในขณะนี้</p>
+                                        ) : (
+                                            predUserBets.map(bet => (
+                                                <div key={bet.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex justify-between items-center">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-mono text-xs font-bold text-yellow-400">#{bet.round}</span>
+                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${bet.position === 'BULL' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                                {bet.position}
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-500">{bet.symbol}</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 mt-1">
+                                                            Lock: ${bet.lockPrice.toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-mono font-bold text-white">{bet.amount} PTS</div>
+                                                        <span className={`text-[10px] font-bold ${bet.status === 'WON' ? 'text-emerald-400' : bet.status === 'LOST' ? 'text-red-400' : 'text-yellow-400'}`}>
+                                                            {bet.status === 'WON' ? `WON +${bet.payout.toFixed(2)} PTS` : bet.status === 'LOST' ? 'LOST' : 'PENDING'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Round History */}
+                                <div className="p-6 rounded-3xl bg-slate-950/50 border border-white/10 space-y-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3">
+                                        <BarChart4 className="w-5 h-5 text-yellow-400" />
+                                        {t.prediction.history}
+                                    </h3>
+                                    <div className="max-h-64 overflow-y-auto space-y-3 custom-scrollbar pr-2">
+                                        {predHistory.map(h => (
+                                            <div key={h.round} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex justify-between items-center">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-mono text-xs font-bold text-slate-300">Round #{h.round}</span>
+                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${h.result === 'BULL' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                            {h.result}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 mt-1">
+                                                        Lock: ${h.lockPrice.toLocaleString()} ➔ Close: ${h.closePrice.toLocaleString()}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-xs font-bold text-slate-300">Pool: {(h.bullPool + h.bearPool).toLocaleString()} PTS</div>
+                                                    <div className="text-[10px] text-slate-500">Bull {((h.bullPool / (h.bullPool + h.bearPool)) * 100).toFixed(0)}% / Bear {((h.bearPool / (h.bullPool + h.bearPool)) * 100).toFixed(0)}%</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Detailed Architectural Guide Panel (Thai) */}
+                            <div className="p-8 rounded-3xl bg-slate-950/90 border border-indigo-500/30 space-y-6">
+                                <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                                    <Brain className="w-8 h-8 text-indigo-400" />
+                                    <div>
+                                        <h3 className={`text-xl font-bold text-white ${headingFont}`}>{t.prediction.guideTitle}</h3>
+                                        <p className="text-xs text-slate-400 mt-1">คำแนะนำโครงสร้างระบบและการนำไปต่อยอดใช้จริงร่วมกับ Binance / On-Chain Smart Contracts</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-300 leading-relaxed">
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                                        <div className="font-bold text-indigo-300 text-sm flex items-center gap-2">
+                                            <Globe className="w-4 h-4 text-cyan-400" /> 1. Binance Spot / WebSocket API
+                                        </div>
+                                        <p className="text-slate-400">
+                                            ดึงราคาเรียลไทม์ตรงจาก Binance ผ่าน REST Endpoint (<code>/api/v3/ticker/price</code>) หรือ WebSocket Stream (<code>wss://stream.binance.com:9443/ws/btcusdt@ticker</code>) เพื่อแสดงความเคลื่อนไหวราคาแบบความหน่วงต่ำที่สุด
+                                        </p>
+                                    </div>
+
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                                        <div className="font-bold text-indigo-300 text-sm flex items-center gap-2">
+                                            <Shield className="w-4 h-4 text-emerald-400" /> 2. Chainlink Oracles & Binance Webhooks
+                                        </div>
+                                        <p className="text-slate-400">
+                                            หากต้องการให้เป็น Decentralized On-Chain Prediction แนะนำให้ยึดราคาปิดจาก Chainlink Price Feeds บน BSC/Polygon หรือใช้ Backend Webhook รับสัญญาณล็อคราคาจาก Binance API เพื่อป้องกันผู้ใช้วิ่งดักหน้า (Front-running)
+                                        </p>
+                                    </div>
+
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                                        <div className="font-bold text-indigo-300 text-sm flex items-center gap-2">
+                                            <Coins className="w-4 h-4 text-yellow-400" /> 3. PancakeSwap Prediction Logic
+                                        </div>
+                                        <p className="text-slate-400">
+                                            เชื่อมต่อกับ Smart Contract รูปแบบ <code>PredictionV2</code> (PancakeSwap Model) โดยผู้ใช้จะโอน BNB/USDT เข้า Vault สัญญาจะจ่ายรางวัลให้อัตโนมัติตามสัดส่วน Pool รางวัล (Bull/Bear Pool Ratio)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Game Tab */}
                     {activeTab === 'game' && (
                         <div className="min-h-[600px] flex flex-col items-center justify-center relative">
@@ -1812,7 +2219,6 @@ const App = () => {
                                 <div className="mb-8 p-4 rounded-2xl bg-indigo-900/20 border border-indigo-500/30 flex justify-between items-center">
                                     <span className="text-indigo-300 font-bold text-sm flex items-center gap-2"><Settings className="w-4 h-4"/> {t.shop.seller}</span>
                                     <div className="flex gap-2">
-                                        {products.length === 0 && <button onClick={seedDefaultProducts} className="px-4 py-2 bg-indigo-600 rounded-lg text-xs font-bold text-white hover:bg-indigo-500 transition-colors">{t.shop.loadDemo}</button>}
                                         <button onClick={() => setIsSellerMode(!isSellerMode)} className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${isSellerMode ? 'bg-red-500/20 text-red-300' : 'bg-indigo-600 text-white'}`}>{isSellerMode ? t.shop.exit : t.shop.manage}</button>
                                     </div>
                                 </div>
