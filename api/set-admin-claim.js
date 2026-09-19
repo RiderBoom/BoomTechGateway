@@ -18,7 +18,7 @@ import { ethers } from 'ethers';
 
 // ─── Admin Wallet List (ตรงกับ ADMIN_WALLETS ใน constants.js) ───────────────
 const ADMIN_WALLETS = [
-    '0xceEcd5Fe0034F397B5A66a7BcD754B5B08a6cd70',
+    '0x00F0903777B197CF673901b3cc768EA902fb601F',
 ].map(w => w.toLowerCase());
 
 // Signature อายุไม่เกิน 5 นาที (ป้องกัน replay attack)

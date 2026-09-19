@@ -24,7 +24,7 @@ export const PLATFORM_FEE_PERCENT = 0;   // % ของจำนวนที่�
 export const PLATFORM_FEE_FIXED_ETH = 0; // ETH คงที่ต่อรายการ
 
 export const ADMIN_WALLETS = [
-    "0xCEEcd5Fe0034F397B5A66a7BcD754B5B08a6cd70",
+    "0x00F0903777B197CF673901b3cc768EA902fb601F",
 ];
 
 // Firebase UID ที่มีสิทธิ์ Admin (เข้า Admin Panel โดยไม่ต้อง connect MetaMask)
