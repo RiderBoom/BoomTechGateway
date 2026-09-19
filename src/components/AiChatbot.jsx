@@ -20,15 +20,16 @@ export default function AiChatbot({ coinSymbol, currentPrice, priceChange, marke
         setInput("");
         setIsTyping(true);
         try {
-            const systemPrompt = `You are BoomBot AI, an intelligent crypto assistant. Current Market Context: Active Coin: ${coinSymbol}, Price: $${currentPrice.toLocaleString()}, 24h Change: ${priceChange.toFixed(2)}%, Market Cap: $${marketStats.marketCap.toLocaleString()}, Fear & Greed: ${fearGreed.value} (${fearGreed.status}). Role: Crypto assistant. Tone: Friendly, professional. Language: Thai.`;
-            const apiKey = import.meta.env.VITE_GEMINI_KEY || "";
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+            const response = await fetch('/api/chat', {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: query }] }], systemInstruction: { parts: [{ text: systemPrompt }] } })
+                body: JSON.stringify({
+                    message: query,
+                    market: { coinSymbol, currentPrice, priceChange, marketCap: marketStats.marketCap, fearGreed: fearGreed.value },
+                }),
             });
             const data = await response.json();
-            const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "ขออภัย ผมไม่สามารถประมวลผลคำตอบได้";
-            setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: botText }]);
+            if (!response.ok) throw new Error(data.error || 'ไม่สามารถติดต่อ AI ได้');
+            setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: data.text, sources: data.sources || [] }]);
         } catch (error) {
             setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: `เกิดข้อผิดพลาด: ${error.message}` }]);
         } finally { setIsTyping(false); }
@@ -55,7 +56,10 @@ export default function AiChatbot({ coinSymbol, currentPrice, priceChange, marke
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.sender === 'bot' ? 'bg-indigo-600' : 'bg-slate-700'}`}>
                                     {msg.sender === 'bot' ? <Bot className="w-5 h-5 text-white" /> : <Users className="w-4 h-4 text-slate-300" />}
                                 </div>
-                                <div className={`max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.sender === 'user' ? 'bg-slate-800 text-white rounded-tr-none' : 'bg-indigo-900/40 border border-indigo-500/20 text-indigo-100 rounded-tl-none'}`}>{msg.text}</div>
+                                <div className={`max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.sender === 'user' ? 'bg-slate-800 text-white rounded-tr-none' : 'bg-indigo-900/40 border border-indigo-500/20 text-indigo-100 rounded-tl-none'}`}>
+                                    {msg.text}
+                                    {msg.sources?.length > 0 && <p className="mt-2 pt-2 border-t border-indigo-400/20 text-[10px] text-indigo-300">อ้างอิง: {msg.sources.map(source => source.title).join(' · ')}</p>}
+                                </div>
                             </div>
                         ))}
                         {isTyping && (
