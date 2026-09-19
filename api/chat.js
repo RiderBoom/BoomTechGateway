@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     }
 
     // Temporary compatibility with the existing Vercel secret. The key is only read server-side.
-    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
     if (!apiKey) return res.status(503).json({ error: 'AI service is not configured' });
 
     const market = req.body?.market || {};
